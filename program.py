@@ -1,9 +1,11 @@
 class Program:
     def __init__(self):
+        self.size = 0
         self.map = []
         
     def create_world(self, filename: str):
         with open(filename) as f:
+            self.size = int(f.readline())
             for line in f:
                 self.map.append(line.split('.')[:-1])            
         self.apply_signal_to_map()
