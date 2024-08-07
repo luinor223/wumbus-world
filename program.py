@@ -8,21 +8,21 @@ class Program:
             self.size = int(f.readline())
             for line in f:
                 self.map.append(line.split('.')[:-1])            
-        self.apply_signal_to_map()
+        self.apply_percepts_to_map()
     
     def is_in_bounds(self, pos: tuple):
         return 0 <= pos[0] < len(self.map) and 0 <= pos[1] < len(self.map[pos[0]])
     
-    def apply_signal_to_pos(self, post: tuple, signal: str):
-        i, j = post
+    def apply_percept_to_pos(self, pos: tuple, percept: str):
+        i, j = pos
         if not self.is_in_bounds((i, j)):
             return
-        if signal in self.map[i][j]:
+        if percept in self.map[i][j]:
             return
-        self.map[i][j] = self.map[i][j] + ',' + signal if self.map[i][j] != '-' else signal
+        self.map[i][j] = self.map[i][j] + ',' + percept if self.map[i][j] != '-' else percept
     
-    def apply_signal_to_map(self):
-        signals = {
+    def apply_percepts_to_map(self):
+        percepts = {
             'W': 'S',
             'P': 'B',
             'P_G': 'W_H',
@@ -31,10 +31,10 @@ class Program:
         
         for i, row in enumerate(self.map):
             for j, cell in enumerate(row):
-                for trigger, perception in signals.items():
+                for trigger, perception in percepts.items():
                     if trigger in cell:
                         for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                            self.apply_signal_to_pos(i + di, j + dj, perception)
+                            self.apply_percept_to_pos(i + di, j + dj, perception)
     
     def cell(self, pos: tuple):
         return self.map[pos[0]][pos[1]].split(",")
