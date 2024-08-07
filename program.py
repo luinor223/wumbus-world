@@ -10,11 +10,10 @@ class Program:
                 self.map.append(line.split('.')[:-1])            
         self.apply_percepts_to_map()
     
-    def is_in_bounds(self, pos: tuple):
-        return 0 <= pos[0] < len(self.map) and 0 <= pos[1] < len(self.map[pos[0]])
+    def is_in_bounds(self, i, j):
+        return 0 <= i < len(self.map) and 0 <= j < len(self.map[i])
     
-    def apply_percept_to_pos(self, pos: tuple, percept: str):
-        i, j = pos
+    def apply_percept_to_pos(self, i, j, percept: str):
         if not self.is_in_bounds((i, j)):
             return
         if percept in self.map[i][j]:
@@ -36,22 +35,18 @@ class Program:
                         for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                             self.apply_percept_to_pos(i + di, j + dj, perception)
     
-    def cell(self, pos: tuple):
-        return self.map[pos[0]][pos[1]].split(",")
+    def cell(self, i, j):
+        return self.map[i][j].split(",")
     
-    def remove_object(self, pos: tuple, object: str):
-        self.map[pos[0]][pos[1]] = self.map[pos[0]][pos[1]].replace(object, '')
-        if self.map[pos[0]][pos[1]] == '':
-            self.map[pos[0]][pos[1]] = '-'
-        if ',,' in self.map[pos[0]][pos[1]]:
-            self.map[pos[0]][pos[1]] = self.map[pos[0]][pos[1]].replace(',,', ',')
-        if self.map[pos[0]][pos[1]][0] == ',' or self.map[pos[0]][pos[1]][-1] == ',':
-            self.map[pos[0]][pos[1]] = self.map[pos[0]][pos[1]][1:-1]
+    def remove_object(self, i, j, object: str):
+        self.map[i][j] = self.map[i][j].replace(object, '')
+        if self.map[i][j] == '':
+            self.map[i][j] = '-'
+        if ',,' in self.map[i][j]:
+            self.map[i][j] = self.map[i][j].replace(',,', ',')
+        if self.map[i][j][0] == ',' or self.map[i][j][-1] == ',':
+            self.map[i][j] = self.map[i][j][1:-1]
         
     def print_world(self):
         for line in self.map:
             print(line)
-            
-a = Program()
-a.create_world('test.txt')
-a.print_world()
