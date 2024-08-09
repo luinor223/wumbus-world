@@ -6,6 +6,8 @@ kb.add_clause([-KB.symbol('B', 0, 0)])
 kb.add_clause([-KB.symbol('B', 1, 0)])
 kb.add_clause([KB.symbol('B', 0, 1)])
 
+#kb.remove_clause([-KB.symbol('B', 1, 0)])
+
 for i in range(0, 4):
     for j in range(0, 4):
         if kb.query('P', i, j) == 'exists':

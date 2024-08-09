@@ -21,38 +21,13 @@ class KB:
             'G': 9
         }
         return entity_map[entity] * 100 + x * 10 + y
-    
-    def init_breeze(self):
-        for x in range(0, 4):
-            for y in range(0, 4):
-                self.add_breeze_pit_relation(self.KB, x, y)
-    
-    def add_breeze_pit_relation(self, cnf : CNF, x, y):
-        breeze = self.symbol('B', x, y)
-        adjacent_pits = []
-        
-        if y < self.size:  # Up
-            adjacent_pits.append(self.symbol('P', x, y+1))
-        if y > 0:  # Down
-            adjacent_pits.append(self.symbol('P', x, y-1))
-        if x < self.size:  # Right
-            adjacent_pits.append(self.symbol('P', x+1, y))
-        if x > 0:  # Left
-            adjacent_pits.append(self.symbol('P', x-1, y))
-        
-        # Bx,y => (Px,y+1 v Px,y-1 v Px+1,y v Px-1,y)
-        cnf.append([-breeze] + adjacent_pits)
-        
-        # (Px,y+1 v Px,y-1 v Px+1,y v Px-1,y) => Bx,y
-        for pit in adjacent_pits:
-            cnf.append([breeze, -pit])
         
     def initialize_kb_relations(self):
         # No Wumpus, Pit, Poisonous Gas, or Healing Potion at the beginning
-        self.KB.append([-KB.symbol('W', 0, 0)])
-        self.KB.append([-KB.symbol('P', 0, 0)])
-        self.KB.append([-KB.symbol('P_G', 0, 0)])
-        self.KB.append([-KB.symbol('H_P', 0, 0)])
+        self.KB.append([-KB.symbol('W', 1, 1)])
+        self.KB.append([-KB.symbol('P', 1, 1)])
+        self.KB.append([-KB.symbol('P_G', 1, 1)])
+        self.KB.append([-KB.symbol('H_P', 1, 1)])
         
         # Pit-Breeze, Wumpus-Stench, Poisonous Gas-Whiff, Healing Potion-Glow rules for each cell
         percepts = {
@@ -61,19 +36,19 @@ class KB:
             'P_G': 'W_H',
             'H_P': 'G_L'
         }
-        for i in range(0, self.size):
-            for j in range(0, self.size):
+        for i in range(1, self.size + 1):
+            for j in range(1, self.size + 1):
                 for trigger, percept in percepts.items():
                     percept_symbol = KB.symbol(percept, i, j)
                     adjacent_trigger = []
                     
-                    if i > 0:  # Up
+                    if i > 1:  # Up
                         adjacent_trigger.append(KB.symbol(trigger, i-1, j))
-                    if i < self.size - 1:  # Down
+                    if i < self.size:  # Down
                         adjacent_trigger.append(KB.symbol(trigger, i+1, j))
-                    if j < self.size - 1:  # Right
+                    if j < self.size:  # Right
                         adjacent_trigger.append(KB.symbol(trigger, i, j+1))
-                    if j > 0:  # Left
+                    if j > 1:  # Left
                         adjacent_trigger.append(KB.symbol(trigger, i, j-1))
 
                     # Px,y => (Tx+1,y v Tx-1,y v Tx,y+1 v Tx,y-1)
@@ -104,3 +79,10 @@ class KB:
                 return 'unknown'
             
         return 'inconsistent'
+    
+    def remove_clause(self, clause):
+        new_kb = CNF()
+        for cl in self.KB:
+            if cl != clause:
+                new_kb.append(cl)
+        self.KB = new_kb

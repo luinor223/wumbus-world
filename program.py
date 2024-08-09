@@ -6,15 +6,14 @@ class Program:
     def create_world(self, filename: str):
         with open(filename) as f:
             self.size = int(f.readline())
+            self.map.append(['X'] * (self.size + 2))
             for line in f:
-                self.map.append(line.split('.')[:-1])            
+                self.map.append(['X'] + line.split('.')[:-1] + ['X'])
+            self.map.append(['X'] * (self.size + 2))            
         self.apply_percepts_to_map()
     
-    def is_in_bounds(self, i, j):
-        return 0 <= i < len(self.map) and 0 <= j < len(self.map[i])
-    
     def apply_percept_to_pos(self, i, j, percept: str):
-        if not self.is_in_bounds((i, j)):
+        if self.map[i][j] == 'X':
             return
         if percept in self.map[i][j]:
             return
@@ -30,6 +29,8 @@ class Program:
         
         for i, row in enumerate(self.map):
             for j, cell in enumerate(row):
+                if cell == 'X':
+                    continue
                 for trigger, perception in percepts.items():
                     if trigger in cell:
                         for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
