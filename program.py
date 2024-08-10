@@ -8,10 +8,11 @@ class Program:
             self.size = int(f.readline())
             self.map.append(['X'] * (self.size + 2))
             for line in f:
-                self.map.append(['X'] + line.split('.')[:-1] + ['X'])
+                line = line.strip()
+                self.map.append(['X'] + line.split('.') + ['X'])
             self.map.append(['X'] * (self.size + 2))            
         self.apply_percepts_to_map()
-    
+        
     def apply_percept_to_pos(self, i, j, percept: str):
         if self.map[i][j] == 'X':
             return

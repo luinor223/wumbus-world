@@ -10,24 +10,27 @@ class KB:
     @staticmethod
     def symbol(entity, x, y):
         entity_map = {
-            'W': 1,
-            'P': 2,
-            'P_G': 3,
-            'H_P': 4,
-            'B': 5,
-            'S': 6,
-            'W_H': 7,
-            'G_L': 8,
-            'G': 9
+            'W': 1,     #Wumpus 
+            'P': 2,     #Pit
+            'P_G': 3,   #Poisonous Gas
+            'H_P': 4,   #Healing Potion
+            'B': 5,     #Breeze
+            'S': 6,     #Stench
+            'W_H': 7,   #Whiff
+            'G_L': 8,   #Glow
+            'G': 9      #Gold
         }
         return entity_map[entity] * 100 + x * 10 + y
         
     def initialize_kb_relations(self):
         # No Wumpus, Pit, Poisonous Gas, or Healing Potion at the beginning
-        self.KB.append([-KB.symbol('W', 1, 1)])
-        self.KB.append([-KB.symbol('P', 1, 1)])
-        self.KB.append([-KB.symbol('P_G', 1, 1)])
-        self.KB.append([-KB.symbol('H_P', 1, 1)])
+        # self.KB.append([-KB.symbol('W', 1, 1)])
+        # self.KB.append([-KB.symbol('P', 1, 1)])
+        # # self.KB.append([KB.symbol('B', 1, 1)])
+        # # self.KB.append([-KB.symbol('P', 2, 1)])
+        # # self.KB.append([KB.symbol('B', 2, 2)])
+        # self.KB.append([-KB.symbol('P_G', 1, 1)])
+        # self.KB.append([-KB.symbol('H_P', 1, 1)])
         
         # Pit-Breeze, Wumpus-Stench, Poisonous Gas-Whiff, Healing Potion-Glow rules for each cell
         percepts = {
@@ -41,7 +44,6 @@ class KB:
                 for trigger, percept in percepts.items():
                     percept_symbol = KB.symbol(percept, i, j)
                     adjacent_trigger = []
-                    
                     if i > 1:  # Up
                         adjacent_trigger.append(KB.symbol(trigger, i-1, j))
                     if i < self.size:  # Down
@@ -57,7 +59,8 @@ class KB:
                     # (Tx,y+1 v Tx,y-1 v Tx+1,y v Tx-1,y) => Px,y
                     for trigger_symbol in adjacent_trigger:
                         self.KB.append([percept_symbol, -trigger_symbol])
-                        
+
+
     def add_clause(self, clause):
         self.KB.append(clause)
     
