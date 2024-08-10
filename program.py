@@ -28,12 +28,10 @@ class Program:
             'H_P': 'G_L'
         }
         
-        for i, row in enumerate(self.map):
-            for j, cell in enumerate(row):
-                if cell == 'X':
-                    continue
-                for trigger, perception in percepts.items():
-                    if trigger in cell:
+        for i in range(1, self.size + 1):
+            for j in range(1, self.size + 1):
+                for entity, perception in percepts.items():
+                    if entity in self.cell(i, j):
                         for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                             self.apply_percept_to_pos(i + di, j + dj, perception)
     
