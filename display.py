@@ -49,14 +49,36 @@ class AgentStats:
             input_map[new_pos[0]][new_pos[1]] = '-'
         elif input_map[new_pos[0]][new_pos[1]] == 'G':
             self.gold += 1
+            self.points += 5000
             input_map[new_pos[0]][new_pos[1]] = '-'
 
         if self.HP <= 0:
+            self.points -= 10000
             print('Game over lmao')
             self.is_alive = False
         else:
             self.pos = new_pos
         return input_map, fog_state
+
+    def shoot_wumpus(self, input_map):
+        if self.facing == 'w' and self.pos[0] > 0:
+            if input_map[self.pos[0] - 1][self.pos[1]] == 'W':
+                print("Killed Wumpus!")
+                input_map[self.pos[0] - 1][self.pos[1]] = '-'
+        elif self.facing == 's' and self.pos[0] < len(input_map) - 1:
+            if input_map[self.pos[0] + 1][self.pos[1]] == 'W':
+                print("Killed Wumpus!")
+                input_map[self.pos[0] + 1][self.pos[1]] = '-'
+        elif self.facing == 'a' and self.pos[1] > 0:
+            if input_map[self.pos[0]][self.pos[1] - 1] == 'W':
+                print("Killed Wumpus!")
+                input_map[self.pos[0]][self.pos[1] - 1] = '-'
+        elif self.facing == 'd' and self.pos[1] < len(input_map[0]) - 1:
+            if input_map[self.pos[0]][self.pos[1] + 1] == 'W':
+                print("Killed Wumpus!")
+                input_map[self.pos[0]][self.pos[1] + 1] = '-'
+        self.points -= 100
+        return input_map
 
 
 def draw_text(text, font_name, size, coordinate, color=(255, 255, 255)) -> tuple:
@@ -151,6 +173,8 @@ def draw_information(scr, agent):
     scr.blit(text3, text3_rect)
     text4, text4_rect = draw_text(f"Gold: {agent.gold}G", "comicsansms", 20, (590, 150))
     scr.blit(text4, text4_rect)
+    text5, text5_rect = draw_text(f"Points: {agent.points}", "comicsansms", 20, (590, 180))
+    scr.blit(text5, text5_rect)
 
 
 def display_map(input_map, size, scr, fog_state, agent):
@@ -171,13 +195,13 @@ def display_map(input_map, size, scr, fog_state, agent):
                 draw_effect(input_map, scr, i, ii)
 
 
-
 if __name__ == '__main__':
     scr_size = (800, 600)
     pygame.init()
     screen = pygame.display.set_mode(scr_size)
     game_size, game_map = return_map('input.txt')
     game_agent = AgentStats()
+    is_fogged = True
 
     for _ in range(len(game_map)):
         for __ in range(len(game_map[0])):
@@ -186,7 +210,8 @@ if __name__ == '__main__':
                 game_map[_][__] = '-'
 
     running = True
-    fog = [[False if game_agent.pos == (_, __) else False for _ in range(len(game_map[0]))] for __ in range(len(game_map))]
+    fog = [[False if game_agent.pos == (_, __) else True for _ in range(len(game_map[0]))] for __ in range(len(game_map))]
+    no_fog = [[False for _ in range(len(game_map[0]))] for __ in range(len(game_map))]
 
     while running:
         screen.fill((0, 0, 0))
@@ -198,18 +223,30 @@ if __name__ == '__main__':
                 if events.key == pygame.K_ESCAPE:
                     running = False
                     break
-                if events.key == pygame.K_w:
+                if events.key == pygame.K_w and game_agent.facing != 'w':
                     game_agent.facing = 'w'
-                if events.key == pygame.K_s:
+                    game_agent.points -= 10
+                if events.key == pygame.K_s and game_agent.facing != 's':
                     game_agent.facing = 's'
-                if events.key == pygame.K_d:
+                    game_agent.points -= 10
+                if events.key == pygame.K_d and game_agent.facing != 'd':
                     game_agent.facing = 'd'
-                if events.key == pygame.K_a:
+                    game_agent.points -= 10
+                if events.key == pygame.K_a and game_agent.facing != 'a':
                     game_agent.facing = 'a'
+                    game_agent.points -= 10
+                if events.key == pygame.K_q:
+                    game_map = game_agent.shoot_wumpus(game_map)
                 if game_agent.is_alive and events.key == pygame.K_SPACE:
                     game_map, fog = game_agent.update_game_state(game_map, fog)
+                    game_agent.points -= 10
+                if events.key == pygame.K_TAB:
+                    is_fogged = not is_fogged
 
-        display_map(game_map, game_size, screen, fog, game_agent)
+        if is_fogged:
+            display_map(game_map, game_size, screen, fog, game_agent)
+        else:
+            display_map(game_map, game_size, screen, no_fog, game_agent)
         pygame.display.flip()
 
     pygame.quit()
