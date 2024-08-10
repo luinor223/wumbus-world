@@ -61,22 +61,33 @@ class AgentStats:
         return input_map, fog_state
 
     def shoot_wumpus(self, input_map):
+        if not self.is_alive:
+            return input_map
+
         if self.facing == 'w' and self.pos[0] > 0:
             if input_map[self.pos[0] - 1][self.pos[1]] == 'W':
                 print("Killed Wumpus!")
                 input_map[self.pos[0] - 1][self.pos[1]] = '-'
+            else:
+                print("You missed...")
         elif self.facing == 's' and self.pos[0] < len(input_map) - 1:
             if input_map[self.pos[0] + 1][self.pos[1]] == 'W':
                 print("Killed Wumpus!")
                 input_map[self.pos[0] + 1][self.pos[1]] = '-'
+            else:
+                print("You missed...")
         elif self.facing == 'a' and self.pos[1] > 0:
             if input_map[self.pos[0]][self.pos[1] - 1] == 'W':
                 print("Killed Wumpus!")
                 input_map[self.pos[0]][self.pos[1] - 1] = '-'
+            else:
+                print("You missed...")
         elif self.facing == 'd' and self.pos[1] < len(input_map[0]) - 1:
             if input_map[self.pos[0]][self.pos[1] + 1] == 'W':
                 print("Killed Wumpus!")
                 input_map[self.pos[0]][self.pos[1] + 1] = '-'
+            else:
+                print("You missed...")
         self.points -= 100
         return input_map
 
