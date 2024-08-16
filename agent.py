@@ -2,6 +2,12 @@ from program import Program
 from kb import KB
 
 class Agent:
+    direction_map = {
+        'UP': (1, 0),
+        'RIGHT': (0, 1),
+        'DOWN': (-1, 0),
+        'LEFT': (0, -1)
+    }
     def __init__(self, program: Program, start_row: int, start_col: int):
         self.pos = (start_row, start_col)
         self.caveExit = (start_row, start_col)
@@ -13,97 +19,268 @@ class Agent:
         self.kb = KB(self.program.size)
 
         self.visited = set()  # Set of visited positions
-        self.safe_tiles = set()  # Set of known safe tiles
+        self.safe_cells = set()  # Set of known safe tiles
+        self.safe_cells.add(self.pos)
         self.finalPath = [self.pos]
+        self.action_log = []
+        
+    def get_direction_prio(self):
+        if self.direction == 'UP':
+            return ['UP', 'RIGHT', 'LEFT', 'DOWN']
+        if self.direction == 'DOWN':
+            return ['DOWN', 'LEFT', 'RIGHT', 'UP']
+        if self.direction == 'LEFT':
+            return ['LEFT', 'DOWN', 'UP', 'RIGHT']
+        if self.direction == 'RIGHT':
+            return ['RIGHT', 'UP', 'DOWN', 'LEFT']
+
+    def infer(self, x, y):
+        if (x, y) in self.safe_cells:
+            return 'safe'
+        wumpus_check = self.kb.query('W', x, y)
+        pit_check = self.kb.query('P', x, y)
+        poison_check = self.kb.query('P_G', x, y)
+        
+        if wumpus_check == 'not exists' and pit_check == 'not exists' and poison_check == 'not exists':
+            return 'safe'
+        if wumpus_check == 'exists' or pit_check == 'exists':
+            return 'unsafe'
+        if poison_check == 'exists':    
+            if self.HP + self.healingPotion * 25 >= 50:
+                return 'somewhat safe'
+            else:
+                return 'unsafe'
+        return 'unsafe'
+    
+    def get_neighbors(self, position):
+        x, y = position
+        neighbors = []
+        directions = self.get_direction_prio()
+        for direction in directions:
+            d_x, d_y = Agent.direction_map[direction]
+            row = x + d_x
+            col = y + d_y
+            if 'X' not in self.program.cell(row, col): # X = Wall
+                neighbors.append((row, col))
+        return neighbors
+    
+    def get_safe_neighbors(self, position):
+        neighbors = self.get_neighbors(position)
+        safe_neighbors = []
+        
+        for neighbor in neighbors:
+            if self.infer(neighbor[0], neighbor[1]) == 'safe':
+                safe_neighbors.append(neighbor)
+                self.safe_cells.add(neighbor)
+        
+        # Leave the 'somewhat safe' (poison) neighbor to last
+        for neighbor in neighbors:
+            if self.infer(neighbor[0], neighbor[1]) == 'somewhat safe':
+                safe_neighbors.append(neighbor)
+                self.safe_cells.add(neighbor)
+        return safe_neighbors
     
     def perceive(self):
-        percepts = ['S', 'B', 'W_H', 'G_L', 'P_G', 'H_P']
+        percepts = ['S', 'B', 'W_H', 'G_L']
         for percept in percepts:
             if percept in self.program.cell(self.pos[0], self.pos[1]):
                 self.kb.add_clause([KB.symbol(percept, self.pos[0], self.pos[1])])
             else:
                 self.kb.add_clause([-KB.symbol(percept, self.pos[0], self.pos[1])])
-        self.kb.add_clause([-KB.symbol('W', self.pos[0], self.pos[1])])
-        self.kb.add_clause([-KB.symbol('P', self.pos[0], self.pos[1])])
-    #     adj = []
-    #     for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+    
+    def use_healing_potion(self):
+        if self.healingPotion > 0 and self.HP < 100:
+            self.action_log.append((self.pos, "use healing potion"))
+            self.HP = min(100, self.HP + 25)
+            self.healingPotion -= 1
+            self.points -= 10
+    
+    def grab_gold(self):
+        self.points -= 10 # Grab
+        self.action_log.append((self.pos, "grab gold"))
+        self.points += 1000
+        self.program.remove_object(self.pos[0], self.pos[1], 'G')
+
+    def climb_out(self):
+        if self.pos == self.caveExit:
+            self.action_log.append((self.pos, "climb out"))
+            self.points += 10  # Bonus for successfully exiting
+    
+    def hanlde_poison(self):
+        self.HP -= 25
+        self.safe_cells.remove(self.pos)
+        if self.HP > 0:
+            self.action_log.append((self.pos, "poison"))
+            return True
+        if self.HP <= 0 and self.healingPotion > 0:
+            self.use_healing_potion()
+            self.action_log.append((self.pos, "poison"))
+            return True
+        return False
+    
+    def handle_cell_contents(self):
+        cell_contents = self.program.cell(self.pos[0], self.pos[1])
         
-    def setPos(self, x, y):
-        self.pos = (x, y)
-
-    def printAgentMap(self):
-        for line in self.agentMap:
-            print(line)
-
-    def is_safe(self, x, y):
-        return self.kb.query('W', x, y) == 'not exists' and self.kb.query('P', x, y) == 'not exists'
-    
-    def get_neighbors(self, position):
-        x, y = position
-        # Possible moves: up, down, left, right
-        neighbors = [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]
-        return [pos for pos in neighbors if self.is_in_bounds(pos)]
-    
-    def is_in_bounds(self, position):
-        return 0 < position[0] < self.program.size + 1 and 0 < position[1] < self.program.size + 1
-    
-    def bfs_to_goal(self, goal):
-        queue = [(self.pos, [])] #the final result not include initial cell
-        bfs_visited = set([self.pos])
-
-        while len(queue) != 0:
-            current_position, path = queue.pop(0)
-            if current_position == goal:
-                return path  # Return the path to the goal
-            for neighbor in self.get_neighbors(current_position):
-                if neighbor not in bfs_visited and neighbor in self.visited:
-                    bfs_visited.add(neighbor)
-                    queue.append((neighbor, path + [neighbor]))
+        if 'G' in cell_contents:
+            self.grab_gold()
         
-    def decide_next_move(self):
+        if 'W' in cell_contents:
+            self.HP = 0
+            self.points -= 10000
+        
+        if 'P' in cell_contents:
+            self.HP = 0
+            self.points -= 10000
+        
+        if 'P_G' in cell_contents:
+            self.hanlde_poison()
+        
+        if 'H_P' in cell_contents:
+            self.points -= 10 # Grab
+            self.healingPotion += 1
+            self.program.remove_object(self.pos[0], self.pos[1], 'H_P')
+        
+        if self.HP <= 0:
+            self.points -= 10000  # Large penalty for dying
+            self.action_log.append((self.pos, "die"))
+    
+    def move(self, new_pos):
+        new_direction = self.get_direction_to(new_pos)
+
+        if self.direction != new_direction:
+            self.turn(new_direction)
+        
+        # Move forward
+        self.action_log.append((self.pos, 'go forward'))
+        self.pos = new_pos
+        self.finalPath.append(self.pos)
         self.visited.add(self.pos)
-        # print('currently at: ', self.pos)
+        self.points -= 10  # Deduct points for moving
 
         self.perceive()
-        self.kb.initialize_kb_relations()
-
-        if ('P_G' in self.program.cell(self.pos[0], self.pos[1])):
-            if (self.HP == 25 and self.healingPotion > 0):
-                self.healingPotion -= 1
-            else:
-                self.HP -= 25
-            if (self.HP == 0):
-                print('Agent is gone!\n')
-                return False
-        elif (any(['W', 'P']) in self.program.cell(self.pos[0], self.pos[1])):
-            print('Agent is gone!\n')
-            return False
-        elif ('G' in self.program.cell(self.pos[0], self.pos[1])):
-            self.finalPath += self.bfs_to_goal(self.caveExit)
-            print('Gold found, return to cave exit')
-            return False
-        elif ('H_P' in self.program.cell(self.pos[0], self.pos[1])):
-            print('Healing potion found!')
-            self.healingPotion += 1
         
-        # Update safe tiles based on current knowledge
-        neighbors = self.get_neighbors(self.pos)
-        for nx, ny in neighbors:
-            if (nx, ny) not in self.visited and self.is_safe(nx, ny):
-                self.safe_tiles.add((nx, ny))
+        # Handle special cell contents
+        self.handle_cell_contents()
 
-        # Find the nearest safe unvisited tile
-        safe_unvisited_tiles = [tile for tile in self.safe_tiles if tile not in self.visited]
-        # print('safe unvisited tiles: ', safe_unvisited_tiles)
-        if safe_unvisited_tiles:
-            next_tile = min(safe_unvisited_tiles, key=lambda pos: abs(pos[0] - self.pos[0]) + abs(pos[1] - self.pos[1])) #go to nearest cell based on manhattan distance, may use BFS to go to lowest cost cell
-            self.visited.add(next_tile)
-            self.finalPath += self.bfs_to_goal(next_tile)
-            self.pos = next_tile
+    def get_direction_to(self, new_pos):
+        dx, dy = new_pos[0] - self.pos[0], new_pos[1] - self.pos[1]
+        for direction, (dx_dir, dy_dir) in self.direction_map.items():
+            if (dx, dy) == (dx_dir, dy_dir):
+                return direction
+        return self.direction  # Default to current direction if no match
+
+    def turn(self, new_direction):
+        turn_direction = 'left'
+        current_index = self.get_direction_prio().index(self.direction)
+        new_index = self.get_direction_prio().index(new_direction)
+        if (new_index - current_index) % 4 == 1 or (new_index - current_index) % 4 == -3:
+            turn_direction = "right"
+
+        self.action_log.append((self.pos, f"turn {turn_direction}"))
+        self.direction = new_direction
+        self.points -= 10
+    
+    def shoot(self):
+        self.action_log.append((self.pos, 'shoot'))
+        self.points -= 100
+        target_pos = (self.pos[0] + self.direction_map[self.direction][0], 
+                    self.pos[1] + self.direction_map[self.direction][1])
+        
+        if 'W' in self.program.cell(target_pos[0], target_pos[1]):
+            self.kill_wumpus(target_pos)
             return True
-        else:  # no safe cell found, implement some shoting Wumpus strategy here
-            self.finalPath += self.bfs_to_goal(self.caveExit)
-            print('no possible path, climb up the cave')
-            self.pos = self.caveExit
-            return False
+        return False
+    
+    def kill_wumpus(self, position):
+        self.program.remove_object(position[0], position[1], 'W')
+        neighbors = self.get_neighbors(position)
+        for neighbor in neighbors:
+            self.program.remove_object(neighbor[0], neighbor[1], 'S')
+            self.kb.remove_clause([KB.symbol('S', neighbor[0], neighbor[1])])
+            self.kb.add_clause([-KB.symbol('S', neighbor[0], neighbor[1])])
+        self.action_log.append((self.pos, 'heard scream'))
+        
+    def consider_shooting(self):
+        for direction in self.get_direction_prio():
+            target_pos = (self.pos[0] + self.direction_map[direction][0], 
+                        self.pos[1] + self.direction_map[direction][1])
+            if self.kb.query('W', target_pos[0], target_pos[1]) == 'exists':
+                if self.shoot(direction):
+                    return True
+        return False
+    
+    def explore(self):
+        self.perceive()
+        while self.HP > 0:
+            print(f"Exploring cave at {self.pos}")
+            safe_neighbors = self.get_safe_neighbors(self.pos)
+            unvisited_safe_neighbors = [pos for pos in safe_neighbors if pos not in self.visited]
             
+            if unvisited_safe_neighbors:
+                next_pos = unvisited_safe_neighbors[0]
+            elif safe_neighbors:
+                next_pos = safe_neighbors[0]
+            else:
+                # No safe moves, consider shooting or backtracking
+                if self.consider_shooting():
+                    continue
+                next_pos = self.backtrack()
+            
+            if next_pos:
+                self.move(next_pos)
+            else:
+                break  # No more moves possible
+        
+        # Try to return to cave exit
+        if self.HP > 0:
+            self.return_to_exit()
+    
+    def find_path(self, start, goal):
+        queue = [(start, [start])]
+        visited = set([start])
+
+        while queue:
+            (vertex, path) = queue.pop(0)
+            if vertex == goal:
+                return path
+            
+            for next_pos in self.get_safe_neighbors(vertex):
+                if next_pos not in visited:
+                    visited.add(next_pos)
+                    queue.append((next_pos, path + [next_pos]))
+
+        return None  # No path found
+    
+    def backtrack(self):
+        # Find the nearest unexplored safe cell
+        unexplored_safe_cells = self.safe_cells - self.visited
+        if not unexplored_safe_cells:
+            return None  # No unexplored safe cells left
+
+        nearest_cell = min(unexplored_safe_cells, 
+                        key=lambda cell: abs(cell[0] - self.pos[0]) + abs(cell[1] - self.pos[1]))
+
+        # Find a path to the nearest unexplored safe cell
+        path = self.find_path(self.pos, nearest_cell)
+        
+        if path:
+            # Move to the next position in the path
+            next_pos = path[1]  # path[0] is the current position
+            self.move(next_pos)
+            return next_pos
+        else:
+            return None  # No path found
+    
+    def return_to_exit(self):
+        path = self.find_path(self.pos, self.caveExit)
+        
+        if path:
+            for next_pos in path[1:]:  # Skip the first position as it's the current position
+                self.move(next_pos)
+                if self.HP <= 0:
+                    break  # Agent died while trying to return
+            
+            if self.pos == self.caveExit:
+                self.climb_out()
+        else:
+            self.action_log.append((self.pos, "unable to find path to exit"))

@@ -1,5 +1,6 @@
-cell = 'P,W,H_P'
-entity_in_cells = cell.split(',')
+from kb import KB
 
-if 'H' in entity_in_cells:
-    print('yes')
+kb = KB(5)
+
+query = kb.query('W', 1, 1) 
+print(query)

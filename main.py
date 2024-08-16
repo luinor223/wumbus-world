@@ -1,14 +1,10 @@
-import agent
-import program
+from agent import Agent
+from program import Program
 def main():
-    ZaWorld = program.Program()
+    ZaWorld = Program()
     ZaWorld.create_world('input1.txt')
-    Wumpus = agent.Agent(ZaWorld, 1, 1)
-    Wumpus.program.print_world()
-    #Wumpus.printAgentMap()
-    while True:
-        if Wumpus.decide_next_move() == False:
-            break  
-    print(Wumpus.finalPath)
-    
+    ZaWorld.print_world()
+    dio = Agent(ZaWorld, 1, 1)
+    dio.explore()
+    print(dio.action_log)
 main()

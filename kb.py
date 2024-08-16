@@ -2,14 +2,7 @@ from pysat.formula import CNF
 from pysat.solvers import Solver
 
 class KB:
-    def __init__(self, map_size):
-        self.KB = CNF()
-        self.size = map_size
-        self.initialize_kb_relations()
-        
-    @staticmethod
-    def symbol(entity, x, y):
-        entity_map = {
+    entity = {
             'W': 1,     #Wumpus 
             'P': 2,     #Pit
             'P_G': 3,   #Poisonous Gas
@@ -20,17 +13,24 @@ class KB:
             'G_L': 8,   #Glow
             'G': 9      #Gold
         }
-        return entity_map[entity] * 100 + x * 10 + y
+    def __init__(self, map_size):
+        self.KB = CNF()
+        self.size = map_size
+        self.initialize_kb_relations()
+        
+    @staticmethod
+    def symbol(entity, x, y):
+        return KB.entity[entity] * 100 + x * 10 + y
         
     def initialize_kb_relations(self):
         # No Wumpus, Pit, Poisonous Gas, or Healing Potion at the beginning
-        # self.KB.append([-KB.symbol('W', 1, 1)])
-        # self.KB.append([-KB.symbol('P', 1, 1)])
-        # # self.KB.append([KB.symbol('B', 1, 1)])
-        # # self.KB.append([-KB.symbol('P', 2, 1)])
-        # # self.KB.append([KB.symbol('B', 2, 2)])
-        # self.KB.append([-KB.symbol('P_G', 1, 1)])
-        # self.KB.append([-KB.symbol('H_P', 1, 1)])
+        self.KB.append([-KB.symbol('W', 1, 1)])
+        self.KB.append([-KB.symbol('P', 1, 1)])
+        # self.KB.append([KB.symbol('B', 1, 1)])
+        # self.KB.append([-KB.symbol('P', 2, 1)])
+        # self.KB.append([KB.symbol('B', 2, 2)])
+        self.KB.append([-KB.symbol('P_G', 1, 1)])
+        self.KB.append([-KB.symbol('H_P', 1, 1)])
         
         # Pit-Breeze, Wumpus-Stench, Poisonous Gas-Whiff, Healing Potion-Glow rules for each cell
         percepts = {

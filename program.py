@@ -1,4 +1,10 @@
 class Program:
+    element_percept = {
+            'W': 'S',
+            'P': 'B',
+            'P_G': 'W_H',
+            'H_P': 'G_L'
+        }
     def __init__(self):
         self.size = 0
         self.map = []
@@ -21,16 +27,9 @@ class Program:
         self.map[i][j] = self.map[i][j] + ',' + percept if self.map[i][j] != '-' else percept
     
     def apply_percepts_to_map(self):
-        percepts = {
-            'W': 'S',
-            'P': 'B',
-            'P_G': 'W_H',
-            'H_P': 'G_L'
-        }
-        
         for i in range(1, self.size + 1):
             for j in range(1, self.size + 1):
-                for entity, perception in percepts.items():
+                for entity, perception in Program.element_percept.items():
                     if entity in self.cell(i, j):
                         for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                             self.apply_percept_to_pos(i + di, j + dj, perception)
