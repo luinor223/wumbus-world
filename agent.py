@@ -119,7 +119,13 @@ class Agent:
         self.action_log.append((self.pos, "grab gold"))
         self.points += 1000
         self.program.remove_object('G', self.pos[0], self.pos[1])
-
+    
+    def grab_healing_potion(self):
+        self.points -= 10 # Grab
+        self.healingPotion += 1
+        self.action_log.append((self.pos, "grab healing potion"))
+        self.program.remove_object('H_P', self.pos[0], self.pos[1])    
+        
     def climb_out(self):
         if self.pos == self.caveExit:
             self.action_log.append((self.pos, "climb out"))
@@ -156,9 +162,7 @@ class Agent:
             self.hanlde_poison()
         
         if 'H_P' in cell_contents:
-            self.points -= 10 # Grab
-            self.healingPotion += 1
-            self.program.remove_object('H_P', self.pos[0], self.pos[1])
+            self.grab_healing_potion()
         
         if self.HP <= 0:
             self.points -= 10000  # Large penalty for dying
@@ -176,8 +180,6 @@ class Agent:
         self.finalPath.append(self.pos)
         self.visited.add(self.pos)
         self.points -= 10  # Deduct points for moving
-
-        self.perceive()
         
         # Handle special cell contents
         self.handle_cell_contents()
@@ -256,18 +258,14 @@ class Agent:
             
             if next_pos:
                 self.move(next_pos)
-            # No more moves possible, check if all safe cells have been explored
-            elif self.all_safe_cells_explored():
-                break # Exit the exploration loop
+                self.perceive() # Only perceive after moving
+            # There is no unvisited safe cells left
             else:
-                break  # No more moves possible
+                break  
 
         # Try to return to cave exit
         if self.HP > 0:
             self.return_to_exit()
-    
-    def all_safe_cells_explored(self):
-        return self.safe_cells.issubset(self.visited)
     
     def find_path(self, start, goal):
         queue = [(start, [start])]
