@@ -26,9 +26,6 @@ class KB:
         # No Wumpus, Pit, Poisonous Gas, or Healing Potion at the beginning
         self.KB.append([-KB.symbol('W', 1, 1)])
         self.KB.append([-KB.symbol('P', 1, 1)])
-        # self.KB.append([KB.symbol('B', 1, 1)])
-        # self.KB.append([-KB.symbol('P', 2, 1)])
-        # self.KB.append([KB.symbol('B', 2, 2)])
         self.KB.append([-KB.symbol('P_G', 1, 1)])
         self.KB.append([-KB.symbol('H_P', 1, 1)])
         
@@ -83,9 +80,19 @@ class KB:
             
         return 'inconsistent'
     
-    def remove_clause(self, clause):
+    def removeall_clause(self, clause):
         new_kb = CNF()
         for cl in self.KB:
             if cl != clause:
+                new_kb.append(cl)
+        self.KB = new_kb
+    
+    def remove_clause(self, clause):
+        new_kb = CNF()
+        removed = False
+        for cl in self.KB:
+            if cl == clause and not removed:
+                removed = True
+            else:
                 new_kb.append(cl)
         self.KB = new_kb

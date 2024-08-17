@@ -23,29 +23,32 @@ class Program:
     def apply_percept_to_pos(self, i, j, percept: str):
         if self.map[i][j] == 'X':
             return
-        if percept in self.map[i][j]:
-            return
-        self.map[i][j] = self.map[i][j] + ',' + percept if self.map[i][j] != '-' else percept
+        cell_contents = self.cell(i, j)
+        if cell_contents == ['-']:
+            cell_contents = []
+        cell_contents.append(percept)
+        self.map[i][j] = ','.join(cell_contents)
+
     
     def apply_percepts_to_map(self):
         for i in range(1, self.size + 1):
             for j in range(1, self.size + 1):
-                for entity, perception in Program.element_percept.items():
-                    if entity in self.cell(i, j):
+                cell_contents = self.cell(i, j)
+                for entity in cell_contents:
+                    if entity in Program.element_percept:
+                        perception = Program.element_percept[entity]
                         for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                             self.apply_percept_to_pos(i + di, j + dj, perception)
     
     def cell(self, i, j):
-        return self.map[i][j].split(",")
+        return self.map[i][j].split(',')
     
-    def remove_object(self, i, j, object: str):
-        self.map[i][j] = self.map[i][j].replace(object, '')
-        if self.map[i][j] == '':
-            self.map[i][j] = '-'
-        if ',,' in self.map[i][j]:
-            self.map[i][j] = self.map[i][j].replace(',,', ',')
-        if self.map[i][j][0] == ',' or self.map[i][j][-1] == ',':
-            self.map[i][j] = self.map[i][j][1:-1]
+    def remove_object(self, object, i, j):
+        cell_contents = self.cell(i, j)
+        cell_contents.remove(object)
+        if cell_contents == []:
+            cell_contents = ['-']
+        self.map[i][j] = ','.join(cell_contents)
         
     def print_world(self):
         for line in self.map[::-1]:

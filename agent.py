@@ -3,16 +3,16 @@ from kb import KB
 
 class Agent:
     direction_map = {
-        'UP': (1, 0),
-        'RIGHT': (0, 1),
-        'DOWN': (-1, 0),
-        'LEFT': (0, -1)
+        'NORTH': (1, 0),
+        'EAST': (0, 1),
+        'SOUTH': (-1, 0),
+        'WEST': (0, -1)
     }
     def __init__(self, program: Program, start_row: int, start_col: int):
         self.pos = (start_row, start_col)
         self.caveExit = (start_row, start_col)
         self.healingPotion = 0
-        self.direction = 'UP'   
+        self.direction = 'NORTH'   
         self.HP = 100
         self.points = 0
         self.program = program
@@ -26,14 +26,14 @@ class Agent:
         self.action_log = []
         
     def get_direction_prio(self):
-        if self.direction == 'UP':
-            return ['UP', 'RIGHT', 'LEFT', 'DOWN']
-        if self.direction == 'DOWN':
-            return ['DOWN', 'LEFT', 'RIGHT', 'UP']
-        if self.direction == 'LEFT':
-            return ['LEFT', 'DOWN', 'UP', 'RIGHT']
-        if self.direction == 'RIGHT':
-            return ['RIGHT', 'UP', 'DOWN', 'LEFT']
+        if self.direction == 'NORTH':
+            return ['NORTH', 'EAST', 'WEST', 'SOUTH']
+        if self.direction == 'SOUTH':
+            return ['SOUTH', 'WEST', 'EAST', 'NORTH']
+        if self.direction == 'WEST':
+            return ['WEST', 'NORTH', 'SOUTH', 'EAST']
+        if self.direction == 'EAST':
+            return ['EAST', 'SOUTH', 'NORTH', 'WEST']
 
     def infer(self, x, y):
         if (x, y) in self.safe_cells:
@@ -51,7 +51,7 @@ class Agent:
         if wumpus_check == 'unknown' or pit_check == 'unknown':
             return 'unsafe'
 
-        # Poison, we don't check if there is a poison here cause to handle the blind case
+        # Poison. We don't check if there is a poison here to handle the blind case
         if self.HP + self.healingPotion * 25 >= 50:
             return 'somewhat safe'
 
@@ -96,11 +96,15 @@ class Agent:
         return safe_neighbors
     
     def perceive(self):
+        cell_content = self.program.cell(self.pos[0], self.pos[1])
+        for object in cell_content:
+            if object == '-':
+                continue
+            self.kb.add_clause([KB.symbol(object, self.pos[0], self.pos[1])])
+        
         percepts = ['S', 'B', 'W_H', 'G_L']
         for percept in percepts:
-            if percept in self.program.cell(self.pos[0], self.pos[1]):
-                self.kb.add_clause([KB.symbol(percept, self.pos[0], self.pos[1])])
-            else:
+            if percept not in cell_content:
                 self.kb.add_clause([-KB.symbol(percept, self.pos[0], self.pos[1])])
     
     def use_healing_potion(self):
@@ -114,7 +118,7 @@ class Agent:
         self.points -= 10 # Grab
         self.action_log.append((self.pos, "grab gold"))
         self.points += 1000
-        self.program.remove_object(self.pos[0], self.pos[1], 'G')
+        self.program.remove_object('G', self.pos[0], self.pos[1])
 
     def climb_out(self):
         if self.pos == self.caveExit:
@@ -122,14 +126,15 @@ class Agent:
             self.points += 10  # Bonus for successfully exiting
     
     def hanlde_poison(self):
+        self.kb.add_clause([KB.symbol('P_G', self.pos[0], self.pos[1])])
         self.HP -= 25
         self.safe_cells.remove(self.pos)
         if self.HP > 0:
-            self.action_log.append((self.pos, "poison"))
+            self.action_log.append((self.pos, "poisoned"))
             return True
         if self.HP <= 0 and self.healingPotion > 0:
             self.use_healing_potion()
-            self.action_log.append((self.pos, "poison"))
+            self.action_log.append((self.pos, "poisoned"))
             return True
         return False
     
@@ -153,7 +158,7 @@ class Agent:
         if 'H_P' in cell_contents:
             self.points -= 10 # Grab
             self.healingPotion += 1
-            self.program.remove_object(self.pos[0], self.pos[1], 'H_P')
+            self.program.remove_object('H_P', self.pos[0], self.pos[1])
         
         if self.HP <= 0:
             self.points -= 10000  # Large penalty for dying
@@ -215,12 +220,13 @@ class Agent:
         return False
     
     def kill_wumpus(self, position):
-        self.program.remove_object(position[0], position[1], 'W')
+        self.program.remove_object('W', position[0], position[1])
         neighbors = self.get_neighbors(position)
         for neighbor in neighbors:
-            self.program.remove_object(neighbor[0], neighbor[1], 'S')
+            self.program.remove_object('S', neighbor[0], neighbor[1])
             self.kb.remove_clause([KB.symbol('S', neighbor[0], neighbor[1])])
-            self.kb.add_clause([-KB.symbol('S', neighbor[0], neighbor[1])])
+            if 'S' not in self.program.cell(neighbor[0], neighbor[1]):
+                self.kb.add_clause([-KB.symbol('S', neighbor[0], neighbor[1])])
         self.action_log.append((self.pos, 'heard scream'))
         
     def consider_shooting(self):
@@ -311,3 +317,8 @@ class Agent:
                 self.climb_out()
         else:
             self.action_log.append((self.pos, "unable to find path to exit"))
+            
+    def output_action_log(self, output_file='result.txt'):
+        with open(output_file, 'w') as f:
+            for action in self.action_log:
+                f.write(f"{action[0]} {action[1]}\n")
