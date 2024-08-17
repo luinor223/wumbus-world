@@ -16,7 +16,8 @@ class Program:
             for line in f:
                 line = line.strip()
                 self.map.append(['X'] + line.split('.') + ['X'])
-            self.map.append(['X'] * (self.size + 2))            
+            self.map.append(['X'] * (self.size + 2)) 
+        self.map = self.map[::-1]        
         self.apply_percepts_to_map()
         
     def apply_percept_to_pos(self, i, j, percept: str):
@@ -47,5 +48,5 @@ class Program:
             self.map[i][j] = self.map[i][j][1:-1]
         
     def print_world(self):
-        for line in self.map:
+        for line in self.map[::-1]:
             print(line)

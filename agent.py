@@ -19,6 +19,7 @@ class Agent:
         self.kb = KB(self.program.size)
 
         self.visited = set()  # Set of visited positions
+        self.visited.add(self.pos)
         self.safe_cells = set()  # Set of known safe tiles
         self.safe_cells.add(self.pos)
         self.finalPath = [self.pos]
@@ -41,15 +42,19 @@ class Agent:
         pit_check = self.kb.query('P', x, y)
         poison_check = self.kb.query('P_G', x, y)
         
+        # Wumpus, Pit
         if wumpus_check == 'not exists' and pit_check == 'not exists' and poison_check == 'not exists':
             return 'safe'
         if wumpus_check == 'exists' or pit_check == 'exists':
             return 'unsafe'
-        if poison_check == 'exists':    
-            if self.HP + self.healingPotion * 25 >= 50:
-                return 'somewhat safe'
-            else:
-                return 'unsafe'
+
+        if wumpus_check == 'unknown' or pit_check == 'unknown':
+            return 'unsafe'
+
+        # Poison, we don't check if there is a poison here cause to handle the blind case
+        if self.HP + self.healingPotion * 25 >= 50:
+            return 'somewhat safe'
+
         return 'unsafe'
     
     def get_neighbors(self, position):
@@ -78,6 +83,16 @@ class Agent:
             if self.infer(neighbor[0], neighbor[1]) == 'somewhat safe':
                 safe_neighbors.append(neighbor)
                 self.safe_cells.add(neighbor)
+        
+        # Hanlde the unknown poison case
+        if 'W_H' in self.program.cell(position[0], position[1]):
+            for neighbor in neighbors:
+                if self.infer(neighbor[0], neighbor[1]) == 'unsafe':
+                    continue
+                if self.HP + self.healingPotion * 25 >= 50:
+                    safe_neighbors.append(neighbor)
+                    self.safe_cells.add(neighbor)
+                
         return safe_neighbors
     
     def perceive(self):
@@ -170,15 +185,23 @@ class Agent:
         return self.direction  # Default to current direction if no match
 
     def turn(self, new_direction):
-        turn_direction = 'left'
         current_index = self.get_direction_prio().index(self.direction)
         new_index = self.get_direction_prio().index(new_direction)
-        if (new_index - current_index) % 4 == 1 or (new_index - current_index) % 4 == -3:
-            turn_direction = "right"
+        diff = (new_index - current_index) % 4
 
-        self.action_log.append((self.pos, f"turn {turn_direction}"))
+        if diff == 0:
+            turn_sequence = []  # No turn needed
+        elif diff == 1:
+            turn_sequence = ['right']
+        elif diff == 2:
+            turn_sequence = ["right", "right"]
+        else:  # diff == 3
+            turn_sequence = ["left"]
+
+        for turn_action in turn_sequence:
+            self.action_log.append((self.pos, f"turn {turn_action}"))
+            self.points -= 10  # Deduct points for each turn
         self.direction = new_direction
-        self.points -= 10
     
     def shoot(self):
         self.action_log.append((self.pos, 'shoot'))
@@ -205,21 +228,20 @@ class Agent:
             target_pos = (self.pos[0] + self.direction_map[direction][0], 
                         self.pos[1] + self.direction_map[direction][1])
             if self.kb.query('W', target_pos[0], target_pos[1]) == 'exists':
-                if self.shoot(direction):
+                self.turn(direction)
+                if self.shoot():
                     return True
         return False
     
     def explore(self):
         self.perceive()
         while self.HP > 0:
-            print(f"Exploring cave at {self.pos}")
+            #print(f"Exploring cave at {self.pos}")
             safe_neighbors = self.get_safe_neighbors(self.pos)
             unvisited_safe_neighbors = [pos for pos in safe_neighbors if pos not in self.visited]
             
             if unvisited_safe_neighbors:
                 next_pos = unvisited_safe_neighbors[0]
-            elif safe_neighbors:
-                next_pos = safe_neighbors[0]
             else:
                 # No safe moves, consider shooting or backtracking
                 if self.consider_shooting():
@@ -228,12 +250,18 @@ class Agent:
             
             if next_pos:
                 self.move(next_pos)
+            # No more moves possible, check if all safe cells have been explored
+            elif self.all_safe_cells_explored():
+                break # Exit the exploration loop
             else:
                 break  # No more moves possible
-        
+
         # Try to return to cave exit
         if self.HP > 0:
             self.return_to_exit()
+    
+    def all_safe_cells_explored(self):
+        return self.safe_cells.issubset(self.visited)
     
     def find_path(self, start, goal):
         queue = [(start, [start])]
@@ -266,7 +294,6 @@ class Agent:
         if path:
             # Move to the next position in the path
             next_pos = path[1]  # path[0] is the current position
-            self.move(next_pos)
             return next_pos
         else:
             return None  # No path found

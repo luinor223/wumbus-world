@@ -1,6 +1,2 @@
-from kb import KB
-
-kb = KB(5)
-
-query = kb.query('W', 1, 1) 
-print(query)
+old = (2,3)
+new = (3,4)
