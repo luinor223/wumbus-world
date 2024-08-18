@@ -8,7 +8,7 @@ aura_map = {
 }
 
 
-def draw_text(text, font_name, size, coordinate, color=(255, 255, 255)) -> tuple:
+def draw_text(text, font_name, size, coordinate, color=(0, 0, 0)) -> tuple:
     display_font = pygame.font.SysFont(font_name, size)
     display_text = display_font.render(text, True, color)
     display_text_rect = display_text.get_rect()
@@ -27,12 +27,12 @@ def check_local(input_map, x, y):
     if y < len(input_map[0]) - 1:
         neighbors.append((0, 1))
 
-    effects = []
+    effects = set()
 
     for element in ('W', 'P', 'P_G', 'H_P'):
         for neighbor in neighbors:
             if element in input_map[x + neighbor[0]][y + neighbor[1]].split(','):
-                effects.append(aura_map[element])
+                effects.add(aura_map[element])
 
     return effects
 
@@ -56,21 +56,55 @@ def draw_effect(input_map, scr, x, y):
         scr.blit(img, (60 + 50 * y, 60 + 50 * x))
 
 
-def draw_information(scr, agent):
-    pygame.draw.rect(scr, (255, 255, 255), (580, 60, 160, 500), width=2)
-    text1, text1_rect = draw_text("Position:", "comicsansms", 20, (590, 70))
+def draw_information(scr, agent, cur_state):
+    info_tab = pygame.transform.scale(pygame.image.load(f"assets/info.png").convert_alpha(), (180, 540))
+    scr.blit(info_tab, (590, 40))
+
+    text1, text1_rect = draw_text("Position:", "comicsansms", 20, (610, 70))
     scr.blit(text1, text1_rect)
-    text2, text2_rect = draw_text(f"{agent.pos}", "comicsansms", 20, (590, 95))
+    text2, text2_rect = draw_text(f"{convert_pos(agent.pos)}", "comicsansms", 20, (610, 95))
     scr.blit(text2, text2_rect)
-    text3, text3_rect = draw_text(f"HP: {agent.HP}", "comicsansms", 20, (590, 125))
-    scr.blit(text3, text3_rect)
-    text4, text4_rect = draw_text(f"Gold: {agent.gold}G", "comicsansms", 20, (590, 150))
-    scr.blit(text4, text4_rect)
-    text5, text5_rect = draw_text(f"Points: {agent.points}", "comicsansms", 20, (590, 180))
+    text5, text5_rect = draw_text(f"Points: {agent.points}", "comicsansms", 20, (610, 125))
     scr.blit(text5, text5_rect)
 
+    hp_state = pygame.transform.scale(pygame.image.load("assets/HP_" + str(agent.HP) + ".png").convert_alpha(), (40, 40))
+    scr.blit(hp_state, (610, 150))
+    text3, text3_rect = draw_text(f"{agent.HP * 25}%", "comicsansms", 20, (660, 155))
+    scr.blit(text3, text3_rect)
 
-def display_map(input_map, scr, agent, fog):
+    num_gold = pygame.transform.scale(pygame.image.load("assets/gold_icon.png").convert_alpha(),(40, 40))
+    scr.blit(num_gold, (610, 200))
+    text4, text4_rect = draw_text(f" x{agent.gold}", "comicsansms", 20, (660, 205))
+    scr.blit(text4, text4_rect)
+
+    num_pots = pygame.transform.scale(pygame.image.load("assets/H_P.png").convert_alpha(),(40, 40))
+    scr.blit(num_pots, (610, 250))
+    text6, text6_rect = draw_text(f" x{agent.pots}", "comicsansms", 20, (660, 255))
+    scr.blit(text6, text6_rect)
+
+    for e_index, element in enumerate(('W', 'P', 'P_G', 'H_P')):
+        img = pygame.transform.scale(pygame.image.load("assets/" + element + ".png").convert_alpha(), (40, 40))
+        scr.blit(img, (620 + 80 * (e_index // 2), 300 + 50 * (e_index % 2)))
+        if aura_map[element] in cur_state:
+            warn = pygame.transform.scale(pygame.image.load("assets/exclam.png").convert_alpha(), (40, 40))
+            scr.blit(warn, (650 + 80 * (e_index // 2), 300 + 50 * (e_index % 2)))
+
+    if agent.scream:
+        scream = pygame.transform.scale(pygame.image.load("assets/scream.png").convert_alpha(), (50, 50))
+        scr.blit(scream, (640, 400))
+
+    if agent.shoot:
+        new_pos = (
+            agent.pos[0] + direction_map[agent.facing][0],
+            agent.pos[1] + direction_map[agent.facing][1],
+        )
+        shoot_cursor = pygame.transform.scale(pygame.image.load("assets/shoot.png").convert_alpha(), (50, 50))
+        scr.blit(shoot_cursor, (60 + 50 * new_pos[1], 60 + 50 * new_pos[0]))
+
+
+def display_map(input_map, scr, agent, fog, fog_overlay):
+    bg_img = pygame.transform.scale(pygame.image.load(f"assets/bg2.png").convert_alpha(), (800, 600))
+    scr.blit(bg_img, (0, 0))
     bg_tab = pygame.transform.scale(pygame.image.load(f"assets/bg1.png").convert_alpha(), (540, 540))
     scr.blit(bg_tab, (40, 40))
 
@@ -81,7 +115,7 @@ def display_map(input_map, scr, agent, fog):
     agent_sprite = pygame.transform.scale(pygame.image.load(f"assets/A_{agent.facing}.png").convert_alpha(), (50, 50))
     scr.blit(agent_sprite, (60 + 50 * agent.pos[1], 60 + 50 * agent.pos[0]))
 
-    draw_information(scr, agent)
+    draw_information(scr, agent, check_local(input_map, agent.pos[0], agent.pos[1]))
 
     for i in range(10):
         for ii in range(10):
@@ -92,7 +126,10 @@ def display_map(input_map, scr, agent, fog):
             for ii in range(10):
                 if agent.pos == (i, ii):
                     continue
-                foggy = pygame.transform.scale(pygame.image.load(f"assets/fog.png").convert_alpha(), (60, 60))
+                if fog_overlay[i][ii]:
+                    foggy = pygame.transform.scale(pygame.image.load(f"assets/fog.png").convert_alpha(), (60, 60))
+                else:
+                    foggy = pygame.transform.scale(pygame.image.load(f"assets/fog_less.png").convert_alpha(), (60, 60))
                 scr.blit(foggy, (55 + 50 * ii, 55 + 50 * i))
 
 
@@ -118,9 +155,12 @@ class PseudoAgent:
         self.move_sequence = move_sequence
         self.agent_map = []
         self.original_map = []
+        self.fogged = [[False if (x, y) == (9, 0) else True for y in range(10)] for x in range(10)]
         self.step_index = 0
         self.pots = 0
         self.gold = 0
+        self.scream = False
+        self.shoot = False
 
         with open(filename) as f:
             self.size = int(f.readline())
@@ -137,6 +177,9 @@ class PseudoAgent:
         self.step_index = 0
         self.pots = 0
         self.gold = 0
+        self.scream = False
+        self.shoot = False
+        self.fogged = [[False if (x, y) == (9, 0) else True for y in range(10)] for x in range(10)]
 
         self.agent_map = list([list(_) for _ in self.original_map])
 
@@ -149,6 +192,7 @@ class PseudoAgent:
         print(f"Agent moved from {convert_pos(self.pos)} to {convert_pos(new_pos)}")
         self.pos = new_pos
         self.points -= 10
+        self.fogged[new_pos[0]][new_pos[1]] = False
 
     def remove_map_object(self, element):
         get_elements = self.agent_map[self.pos[0]][self.pos[1]].split(',')
@@ -159,6 +203,7 @@ class PseudoAgent:
             self.agent_map[self.pos[0]][self.pos[1]] = ','.join(get_elements)
 
     def remove_wumbus(self):
+        self.scream = True
         new_pos = (
             self.pos[0] + direction_map[self.facing][0],
             self.pos[1] + direction_map[self.facing][1],
@@ -171,6 +216,11 @@ class PseudoAgent:
             self.agent_map[new_pos[0]][new_pos[1]] = ','.join(get_elements)
 
     def next_step(self):
+        if self.scream:
+            self.scream = False
+        if self.shoot:
+            self.shoot = False
+
         if self.step_index == len(self.move_sequence):
             self.reset_stats()
             return
@@ -217,6 +267,7 @@ class PseudoAgent:
             self.remove_wumbus()
 
         elif movement == 'shoot':
+            self.shoot = True
             print('pang!')
 
         elif movement == 'poisoned':
@@ -229,8 +280,8 @@ class PseudoAgent:
 
         self.step_index += 1
 
-    def display(self, scr):
-        display_map(self.agent_map, scr, self, fog=True)
+    def display(self, scr, toggle_fog):
+        display_map(self.agent_map, scr, self, toggle_fog, self.fogged)
 
 
 

@@ -7,8 +7,6 @@ from display_mode import PseudoAgent
 
 
 def main():
-
-
     ZaWorld = Program()
     ZaWorld.create_world('input.txt')
     ZaWorld.print_world()
@@ -23,6 +21,7 @@ def main():
     screen = pygame.display.set_mode(scr_size)
     fps = 12
     pyclock = pygame.time.Clock()
+    toggle_fog = True
 
     running = True
     while running:
@@ -34,12 +33,15 @@ def main():
                 running = False
                 break
 
+            if events.type == pygame.KEYDOWN:
+                if events.key == pygame.K_TAB:
+                    toggle_fog = not toggle_fog
+
         jotaro.next_step()
-        jotaro.display(screen)
+        jotaro.display(screen, toggle_fog)
         pygame.display.flip()
 
     pygame.quit()
-
 
 
 if __name__ == "__main__":
