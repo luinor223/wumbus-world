@@ -263,8 +263,9 @@ class Agent:
                         self.move(next_pos) # proceed normally
                     else: #there is ONLY poison cells if this is reached
                         #check if it have enough HP to escape if it go to this cell(>50)
-                        path, hp_left = self.find_path(self.pos, self.caveExit)
-                        if path and hp_left >= 50:
+                        path, total_poison_cell = self.find_path(self.pos, self.caveExit)
+                        if path and self.HP + self.healingPotion*25 - total_poison_cell * 25 >= 50:
+                            
                             #print('poision cell, still manageable')
                             self.move(next_pos)
                         else: #If not then the best choice is to exit the cave
