@@ -57,35 +57,6 @@ def draw_effect(input_map, scr, x, y):
 
 
 def draw_information(scr, agent):
-    # Draw the facing direction
-    if agent.facing == 0:
-        triangle = [
-            (70 + 50 * agent.pos[1], 65 + 50 * agent.pos[0]),
-            (100 + 50 * agent.pos[1], 65 + 50 * agent.pos[0]),
-            (85 + 50 * agent.pos[1], 50 + 50 * agent.pos[0]),
-        ]
-    elif agent.facing == 3:
-        triangle = [
-            (65 + 50 * agent.pos[1], 70 + 50 * agent.pos[0]),
-            (65 + 50 * agent.pos[1], 100 + 50 * agent.pos[0]),
-            (50 + 50 * agent.pos[1], 85 + 50 * agent.pos[0]),
-        ]
-    elif agent.facing == 2:
-        triangle = [
-            (70 + 50 * agent.pos[1], 105 + 50 * agent.pos[0]),
-            (100 + 50 * agent.pos[1], 105 + 50 * agent.pos[0]),
-            (85 + 50 * agent.pos[1], 120 + 50 * agent.pos[0]),
-        ]
-    elif agent.facing == 1:
-        triangle = [
-            (105 + 50 * agent.pos[1], 70 + 50 * agent.pos[0]),
-            (105 + 50 * agent.pos[1], 100 + 50 * agent.pos[0]),
-            (120 + 50 * agent.pos[1], 85 + 50 * agent.pos[0]),
-        ]
-    else:
-        triangle = []
-    pygame.draw.polygon(scr, (255, 128, 0), triangle)
-
     pygame.draw.rect(scr, (255, 255, 255), (580, 60, 160, 500), width=2)
     text1, text1_rect = draw_text("Position:", "comicsansms", 20, (590, 70))
     scr.blit(text1, text1_rect)
@@ -99,22 +70,28 @@ def draw_information(scr, agent):
     scr.blit(text5, text5_rect)
 
 
-def display_map(input_map, scr, fog_state, agent):
+def display_map(input_map, scr, agent, fog):
     for i in range(10):
         for ii in range(10):
-            if fog_state[i][ii]:
-                pygame.draw.rect(scr, (100, 100, 100), (60 + 50 * ii, 60 + 50 * i, 50, 50))
-            else:
-                draw_cell(input_map, scr, i, ii)
+            draw_cell(input_map, scr, i, ii)
             pygame.draw.rect(scr, (255, 255, 255), (60 + 50 * ii, 60 + 50 * i, 50, 50), width=1)
 
-    pygame.draw.rect(scr, (255, 128, 0), (70 + 50 * agent.pos[1], 70 + 50 * agent.pos[0], 30, 30))
+    agent_sprite = pygame.transform.scale(pygame.image.load(f"assets/A_{agent.facing}.png").convert_alpha(), (50, 50))
+    scr.blit(agent_sprite, (60 + 50 * agent.pos[1], 60 + 50 * agent.pos[0]))
+
     draw_information(scr, agent)
 
     for i in range(10):
         for ii in range(10):
-            if not fog_state[i][ii]:
-                draw_effect(input_map, scr, i, ii)
+            draw_effect(input_map, scr, i, ii)
+
+    if fog:
+        for i in range(10):
+            for ii in range(10):
+                if agent.pos == (i, ii):
+                    continue
+                foggy = pygame.transform.scale(pygame.image.load(f"assets/fog.png").convert_alpha(), (60, 60))
+                scr.blit(foggy, (55 + 50 * ii, 55 + 50 * i))
 
 
 def convert_pos(pos_):
@@ -225,6 +202,9 @@ class PseudoAgent:
             print("rawr.")
             self.remove_wumbus()
 
+        elif movement == 'shoot':
+            print('pang!')
+
         elif movement == 'poisoned':
             print("The agent has been poisoned")
             self.HP -= 1
@@ -237,8 +217,7 @@ class PseudoAgent:
         return True
 
     def display(self, scr):
-        fog = [[False for _ in range(10)] for __ in range(10)]
-        display_map(self.agent_map, scr, fog, self)
+        display_map(self.agent_map, scr, self, fog=True)
 
 
 
