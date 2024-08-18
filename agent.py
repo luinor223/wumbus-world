@@ -43,8 +43,6 @@ class Agent:
                 continue
             if entity in percepts:
                 self.kb.add_clause([KB.symbol(entity, self.pos[0], self.pos[1])])
-                if 'G_L' in entity:
-                    print(f'G_L at {self.pos}')
         
         for percept in percepts:
             if percept not in cell_content:
@@ -132,14 +130,7 @@ class Agent:
     def handle_poison(self):
         self.HP -= 25
         self.safe_cells.remove(self.pos)
-        if self.HP > 0:
-            self.action_log.append((self.pos, "poisoned"))
-            return True
-        if self.HP <= 0 and self.healingPotion > 0:
-            self.use_healing_potion()
-            self.action_log.append((self.pos, "poisoned"))
-            return True
-        return False
+        self.action_log.append((self.pos, "poisoned"))
     
     def handle_cell_contents(self):
         cell_contents = self.program.cell(self.pos[0], self.pos[1])
@@ -158,6 +149,9 @@ class Agent:
         
         if 'H_P' in cell_contents:
             self.grab_healing_potion()
+        
+        if self.HP <= 25:
+            self.use_healing_potion()
         
         if self.HP <= 0:
             self.points -= 10000

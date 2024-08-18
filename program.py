@@ -20,7 +20,7 @@ class Program:
         self.map = self.map[::-1]        
         self.apply_percepts_to_map()
         
-    def apply_percept_to_pos(self, i, j, percept: str):
+    def apply_percept_to_pos(self, i, j, percept):
         if self.map[i][j] == 'X':
             return
         cell_contents = self.cell(i, j)
