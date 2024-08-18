@@ -71,10 +71,12 @@ def draw_information(scr, agent):
 
 
 def display_map(input_map, scr, agent, fog):
+    bg_tab = pygame.transform.scale(pygame.image.load(f"assets/bg1.png").convert_alpha(), (520, 520))
+    scr.blit(bg_tab, (50, 50))
+
     for i in range(10):
         for ii in range(10):
             draw_cell(input_map, scr, i, ii)
-            pygame.draw.rect(scr, (255, 255, 255), (60 + 50 * ii, 60 + 50 * i, 50, 50), width=1)
 
     agent_sprite = pygame.transform.scale(pygame.image.load(f"assets/A_{agent.facing}.png").convert_alpha(), (50, 50))
     scr.blit(agent_sprite, (60 + 50 * agent.pos[1], 60 + 50 * agent.pos[0]))

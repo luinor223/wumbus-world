@@ -26,12 +26,14 @@ def main():
     time_stop = jotaro.next_step()
     jotaro.display(screen)
     pygame.display.flip()
+
     while time_stop:
         screen.fill((0, 0, 0))
         time.sleep(1)
         time_stop = jotaro.next_step()
         jotaro.display(screen)
         pygame.display.flip()
+
 
 
 if __name__ == "__main__":
