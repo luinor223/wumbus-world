@@ -20,6 +20,10 @@ class KB:
         
     @staticmethod
     def symbol(entity, x, y):
+        if x == 10:
+            x = 0
+        if y == 10:
+            y = 0
         return KB.entity[entity] * 100 + x * 10 + y
         
     def initialize_kb_relations(self):

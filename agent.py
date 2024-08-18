@@ -33,6 +33,21 @@ class Agent:
         if self.direction == 'EAST':
             return ['EAST', 'SOUTH', 'NORTH', 'WEST']
 
+    def perceive(self):
+        cell_content = self.program.cell(self.pos[0], self.pos[1])
+        percepts = ['S', 'B', 'W_H', 'G_L']
+        for entity in cell_content:
+            if entity == '-':
+                continue
+            if entity in percepts:
+                self.kb.add_clause([KB.symbol(entity, self.pos[0], self.pos[1])])
+                if 'G_L' in entity:
+                    print(f'G_L at {self.pos}')
+        
+        for percept in percepts:
+            if percept not in cell_content:
+                self.kb.add_clause([-KB.symbol(percept, self.pos[0], self.pos[1])])
+    
     def infer(self, x, y):
         if (x, y) in self.safe_cells:
             return 'safe'
@@ -84,18 +99,6 @@ class Agent:
                 
         return safe_neighbors
     
-    def perceive(self):
-        cell_content = self.program.cell(self.pos[0], self.pos[1])
-        for entity in cell_content:
-            if entity == '-':
-                continue
-            self.kb.add_clause([KB.symbol(entity, self.pos[0], self.pos[1])])
-        
-        percepts = ['S', 'B', 'W_H', 'G_L']
-        for percept in percepts:
-            if percept not in cell_content:
-                self.kb.add_clause([-KB.symbol(percept, self.pos[0], self.pos[1])])
-    
     def use_healing_potion(self):
         if self.healingPotion > 0 and self.HP < 100:
             self.action_log.append((self.pos, "use healing potion"))
@@ -110,16 +113,14 @@ class Agent:
         self.program.remove_object('G', self.pos[0], self.pos[1])
     
     def grab_healing_potion(self):
-        self.points -= 10 # Grab
+        self.points -= 10  # Grab
         self.healingPotion += 1
         self.action_log.append((self.pos, "grab healing potion"))
         self.program.remove_object('H_P', self.pos[0], self.pos[1])
-        self.kb.remove_clause([KB.symbol('H_P', self.pos[0], self.pos[1])])
-        
         for neighbor in self.get_neighbors(self.pos):
-            self.program.remove_object('G_L', neighbor[0], neighbor[1])  
+            self.program.remove_object('G_L', neighbor[0], neighbor[1])
             self.kb.remove_clause([KB.symbol('G_L', neighbor[0], neighbor[1])])
-            self.kb.add_clause([-KB.symbol('G_L', self.pos[0], self.pos[1])])
+            self.kb.add_clause([-KB.symbol('G_L', neighbor[0], neighbor[1])])
             
     def climb_out(self):
         if self.pos == self.caveExit:
@@ -169,12 +170,16 @@ class Agent:
         # Move forward
         self.action_log.append((self.pos, 'go forward'))
         self.pos = new_pos
-        self.finalPath.append(self.pos)
-        self.visited.add(self.pos)
         self.points -= 10  # Deduct points for moving
         
         # Handle special cell contents
         self.handle_cell_contents()
+        
+        # Perceive new position
+        if new_pos not in self.visited:
+            self.perceive()
+        self.finalPath.append(self.pos)
+        self.visited.add(self.pos)
 
     def get_direction_to(self, new_pos):
         dx, dy = new_pos[0] - self.pos[0], new_pos[1] - self.pos[1]
@@ -250,7 +255,6 @@ class Agent:
             
             if next_pos:
                 self.move(next_pos)
-                self.perceive() # Only perceive after moving
             # There is no unvisited safe cells left
             else:
                 break  
