@@ -1,5 +1,5 @@
 from program import Program
-from kb import KB
+from kb import KnowledgeBase
 
 class Agent:
     direction_map = {
@@ -16,7 +16,7 @@ class Agent:
         self.HP = 100
         self.points = 0
         self.program = program
-        self.kb = KB(self.program.size)
+        self.kb = KnowledgeBase(self.program.size)
 
         self.visited = set([self.pos])  # Set of visited positions
         self.safe_cells = set([self.pos])  # Set of known safe tiles
@@ -42,11 +42,11 @@ class Agent:
             if entity == '-':
                 continue
             if entity in percepts:
-                self.kb.add_clause([KB.symbol(entity, self.pos[0], self.pos[1])])
+                self.kb.add_clause([KnowledgeBase.symbol(entity, self.pos[0], self.pos[1])])
         
         for percept in percepts:
             if percept not in cell_content:
-                self.kb.add_clause([-KB.symbol(percept, self.pos[0], self.pos[1])])
+                self.kb.add_clause([-KnowledgeBase.symbol(percept, self.pos[0], self.pos[1])])
     
     def infer(self, x, y):
         if (x, y) in self.safe_cells:
@@ -109,7 +109,7 @@ class Agent:
     def grab_gold(self):
         self.points -= 10 # Grab
         self.action_log.append((self.pos, "grab gold"))
-        self.points += 1000
+        self.points += 5000
         self.program.remove_object('G', self.pos[0], self.pos[1])
     
     def grab_healing_potion(self):
@@ -119,8 +119,8 @@ class Agent:
         self.program.remove_object('H_P', self.pos[0], self.pos[1])
         for neighbor in self.get_neighbors(self.pos):
             self.program.remove_object('G_L', neighbor[0], neighbor[1])
-            self.kb.remove_clause([KB.symbol('G_L', neighbor[0], neighbor[1])])
-            self.kb.add_clause([-KB.symbol('G_L', neighbor[0], neighbor[1])])
+            self.kb.remove_clause([KnowledgeBase.symbol('G_L', neighbor[0], neighbor[1])])
+            self.kb.add_clause([-KnowledgeBase.symbol('G_L', neighbor[0], neighbor[1])])
             
     def climb_out(self):
         if self.pos == self.caveExit:
@@ -219,9 +219,9 @@ class Agent:
         neighbors = self.get_neighbors(position)
         for neighbor in neighbors:
             self.program.remove_object('S', neighbor[0], neighbor[1])
-            self.kb.remove_clause([KB.symbol('S', neighbor[0], neighbor[1])])
+            self.kb.remove_clause([KnowledgeBase.symbol('S', neighbor[0], neighbor[1])])
             if 'S' not in self.program.cell(neighbor[0], neighbor[1]):
-                self.kb.add_clause([-KB.symbol('S', neighbor[0], neighbor[1])])
+                self.kb.add_clause([-KnowledgeBase.symbol('S', neighbor[0], neighbor[1])])
         self.action_log.append((self.pos, 'heard scream'))
         
     def consider_shooting(self):

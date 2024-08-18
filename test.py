@@ -1,4 +1,4 @@
-from kb import KB
+from kb import KnowledgeBase
 from program import Program
 from agent import Agent
 

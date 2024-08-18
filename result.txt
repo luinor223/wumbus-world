@@ -91,6 +91,7 @@
 (7, 1) go forward
 (7, 2) go forward
 (7, 3) poisoned
+(7, 3) use healing potion
 (7, 3) go forward
 (7, 4) go forward
 (7, 5) go forward
@@ -116,8 +117,8 @@
 (8, 8) turn left
 (8, 8) go forward
 (9, 8) go forward
-(10, 8) use healing potion
 (10, 8) poisoned
+(10, 8) use healing potion
 (10, 8) turn right
 (10, 8) go forward
 (10, 9) turn right
@@ -171,8 +172,8 @@
 (5, 8) turn right
 (5, 8) go forward
 (5, 9) go forward
-(5, 10) use healing potion
 (5, 10) poisoned
+(5, 10) use healing potion
 (5, 10) turn right
 (5, 10) go forward
 (4, 10) grab healing potion
@@ -181,8 +182,8 @@
 (3, 10) turn right
 (3, 10) go forward
 (4, 10) go forward
-(5, 10) use healing potion
 (5, 10) poisoned
+(5, 10) use healing potion
 (5, 10) go forward
 (6, 10) go forward
 (7, 10) go forward
@@ -192,7 +193,6 @@
 (10, 10) turn left
 (10, 10) go forward
 (10, 9) go forward
-(10, 8) use healing potion
 (10, 8) poisoned
 (10, 8) go forward
 (10, 7) go forward
