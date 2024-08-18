@@ -18,10 +18,8 @@ class Agent:
         self.program = program
         self.kb = KB(self.program.size)
 
-        self.visited = set()  # Set of visited positions
-        self.visited.add(self.pos)
-        self.safe_cells = set()  # Set of known safe tiles
-        self.safe_cells.add(self.pos)
+        self.visited = set([self.pos])  # Set of visited positions
+        self.safe_cells = set([self.pos])  # Set of known safe tiles
         self.finalPath = [self.pos]
         self.action_log = []
         
@@ -88,10 +86,10 @@ class Agent:
     
     def perceive(self):
         cell_content = self.program.cell(self.pos[0], self.pos[1])
-        for object in cell_content:
-            if object == '-':
+        for entity in cell_content:
+            if entity == '-':
                 continue
-            self.kb.add_clause([KB.symbol(object, self.pos[0], self.pos[1])])
+            self.kb.add_clause([KB.symbol(entity, self.pos[0], self.pos[1])])
         
         percepts = ['S', 'B', 'W_H', 'G_L']
         for percept in percepts:
@@ -115,8 +113,14 @@ class Agent:
         self.points -= 10 # Grab
         self.healingPotion += 1
         self.action_log.append((self.pos, "grab healing potion"))
-        self.program.remove_object('H_P', self.pos[0], self.pos[1])    
+        self.program.remove_object('H_P', self.pos[0], self.pos[1])
+        self.kb.remove_clause([KB.symbol('H_P', self.pos[0], self.pos[1])])
         
+        for neighbor in self.get_neighbors(self.pos):
+            self.program.remove_object('G_L', neighbor[0], neighbor[1])  
+            self.kb.remove_clause([KB.symbol('G_L', neighbor[0], neighbor[1])])
+            self.kb.add_clause([-KB.symbol('G_L', self.pos[0], self.pos[1])])
+            
     def climb_out(self):
         if self.pos == self.caveExit:
             self.action_log.append((self.pos, "climb out"))
@@ -189,9 +193,9 @@ class Agent:
         elif diff == 1:
             turn_sequence = ['right']
         elif diff == 2:
-            turn_sequence = ["right", "right"]
-        else:  # diff == 3
             turn_sequence = ["left"]
+        else:  # diff == 3
+            turn_sequence = ["right", "right"]
 
         for turn_action in turn_sequence:
             self.action_log.append((self.pos, f"turn {turn_action}"))
