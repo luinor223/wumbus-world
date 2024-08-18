@@ -24,6 +24,8 @@ class Agent:
         self.action_log = []
         
     def get_direction_prio(self):
+        #Get direction based on where the agent facing
+        #The direction is in order: [FORWARD, RIGHT, LEFT, BEHIND]
         if self.direction == 'NORTH':
             return ['NORTH', 'EAST', 'WEST', 'SOUTH']
         if self.direction == 'SOUTH':
@@ -264,20 +266,22 @@ class Agent:
             self.return_to_exit()
     
     def find_path(self, start, goal):
-        queue = [(start, [start])]
-        visited = set([start])
-
+        #Note: prioritise path contain least poison tile(even if its cost(action points) is higher than the shorsted path)
+        queue = [(start, [start], 0)] #[current pos, path taken, number of poison gas taken]
+        reached = {start: 0} #to keep track of visited cell, also represent the total poison gas taken up to this tile
         while queue:
-            (vertex, path) = queue.pop(0)
+            (vertex, path, poison_tiles_num) = queue.pop(0)
             if vertex == goal:
                 return path
-            
-            for next_pos in self.get_safe_neighbors(vertex):
-                if next_pos not in visited:
-                    visited.add(next_pos)
-                    queue.append((next_pos, path + [next_pos]))
+            if (poison_tiles_num*25 < self.HP + self.healingPotion*25):
+                for next_pos in self.get_safe_neighbors(vertex):
+                    if next_pos not in reached or poison_tiles_num < reached[next_pos]:
+                        if self.kb.query('P_G', next_pos[0], next_pos[1]) == 'exists':
+                            poison_tiles_num += 1
+                        reached[next_pos] = poison_tiles_num
+                        queue.append((next_pos, path + [next_pos], poison_tiles_num))
 
-        return None  # No path found
+        return None  # No path found    
     
     def backtrack(self):
         # Find the nearest unexplored safe cell
