@@ -132,17 +132,33 @@ def check_local(input_map, x, y):
 
 
 def draw_cell(input_map, scr, x, y):
+    grd = pygame.transform.scale(pygame.image.load("assets/ground.png").convert_alpha(), (50, 50))
+    scr.blit(grd, (60 + 50 * y, 60 + 50 * x))
     if input_map[x][y] != '-':
-        pygame.draw.rect(scr, color_map[input_map[x][y]], (70 + 50 * y, 70 + 50 * x, 30, 30))
+        # pygame.draw.rect(scr, color_map[input_map[x][y]], (70 + 50 * y, 70 + 50 * x, 30, 30))
+        img = pygame.transform.scale(pygame.image.load("assets/" + input_map[x][y] + ".png").convert_alpha(), (50, 50))
+        scr.blit(img, (60 + 50 * y, 60 + 50 * x))
 
 
 def draw_effect(input_map, scr, x, y):
     effects = check_local(input_map, x, y)
     for element in effects:
-        pygame.draw.circle(scr, color_map[element],
-                           (77 + 50 * y + pos_offset[element][1] * 16,
-                            77 + 50 * x + pos_offset[element][0] * 16),
-                           5)
+        if element == 'W':
+            img = pygame.transform.scale(pygame.image.load("assets/S.png").convert_alpha(),
+                                         (50, 50))
+            scr.blit(img, (60 + 50 * y, 60 + 50 * x))
+        if element == 'P':
+            img = pygame.transform.scale(pygame.image.load("assets/B.png").convert_alpha(),
+                                         (50, 50))
+            scr.blit(img, (60 + 50 * y, 60 + 50 * x))
+        if element == 'P_G':
+            img = pygame.transform.scale(pygame.image.load("assets/W_H.png").convert_alpha(),
+                                         (50, 50))
+            scr.blit(img, (60 + 50 * y, 60 + 50 * x))
+        if element == 'H_P':
+            img = pygame.transform.scale(pygame.image.load("assets/G_L.png").convert_alpha(),
+                                         (50, 50))
+            scr.blit(img, (60 + 50 * y, 60 + 50 * x))
 
 
 def draw_information(scr, agent):
@@ -153,19 +169,19 @@ def draw_information(scr, agent):
             (100 + 50 * agent.pos[1], 65 + 50 * agent.pos[0]),
             (85 + 50 * agent.pos[1], 50 + 50 * agent.pos[0]),
         ]
-    elif game_agent.facing == 'a':
+    elif agent.facing == 'a':
         triangle = [
             (65 + 50 * agent.pos[1], 70 + 50 * agent.pos[0]),
             (65 + 50 * agent.pos[1], 100 + 50 * agent.pos[0]),
             (50 + 50 * agent.pos[1], 85 + 50 * agent.pos[0]),
         ]
-    elif game_agent.facing == 's':
+    elif agent.facing == 's':
         triangle = [
             (70 + 50 * agent.pos[1], 105 + 50 * agent.pos[0]),
             (100 + 50 * agent.pos[1], 105 + 50 * agent.pos[0]),
             (85 + 50 * agent.pos[1], 120 + 50 * agent.pos[0]),
         ]
-    elif game_agent.facing == 'd':
+    elif agent.facing == 'd':
         triangle = [
             (105 + 50 * agent.pos[1], 70 + 50 * agent.pos[0]),
             (105 + 50 * agent.pos[1], 100 + 50 * agent.pos[0]),
@@ -195,7 +211,7 @@ def display_map(input_map, size, scr, fog_state, agent):
                 pygame.draw.rect(scr, (100, 100, 100), (60 + 50 * ii, 60 + 50 * i, 50, 50))
             else:
                 draw_cell(input_map, scr, i, ii)
-            pygame.draw.rect(scr, (255, 255, 255), (60 + 50 * ii, 60 + 50 * i, 50, 50), width=1)
+            # pygame.draw.rect(scr, (255, 255, 255), (60 + 50 * ii, 60 + 50 * i, 50, 50), width=1)
 
     pygame.draw.rect(scr, color_map['A'], (70 + 50 * agent.pos[1], 70 + 50 * agent.pos[0], 30, 30))
     draw_information(scr, agent)
@@ -212,7 +228,7 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode(scr_size)
     game_size, game_map = return_map('input.txt')
     game_agent = AgentStats()
-    is_fogged = True
+    is_fogged = False
 
     for _ in range(len(game_map)):
         for __ in range(len(game_map[0])):

@@ -28,7 +28,6 @@ class Program:
             cell_contents = []
         cell_contents.append(percept)
         self.map[i][j] = ','.join(cell_contents)
-
     
     def apply_percepts_to_map(self):
         for i in range(1, self.size + 1):
@@ -53,3 +52,4 @@ class Program:
     def print_world(self):
         for line in self.map[::-1]:
             print(line)
+
