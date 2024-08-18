@@ -1,7 +1,7 @@
 from pysat.formula import CNF
 from pysat.solvers import Solver
 
-class KB:
+class KnowledgeBase:
     entity = {
             'W': 1,     #Wumpus 
             'P': 2,     #Pit
@@ -24,14 +24,14 @@ class KB:
             x = 0
         if y == 10:
             y = 0
-        return KB.entity[entity] * 100 + x * 10 + y
+        return KnowledgeBase.entity[entity] * 100 + x * 10 + y
         
     def initialize_kb_relations(self):
         # No Wumpus, Pit, Poisonous Gas, or Healing Potion at the beginning
-        self.KB.append([-KB.symbol('W', 1, 1)])
-        self.KB.append([-KB.symbol('P', 1, 1)])
-        self.KB.append([-KB.symbol('P_G', 1, 1)])
-        self.KB.append([-KB.symbol('H_P', 1, 1)])
+        self.KB.append([-KnowledgeBase.symbol('W', 1, 1)])
+        self.KB.append([-KnowledgeBase.symbol('P', 1, 1)])
+        self.KB.append([-KnowledgeBase.symbol('P_G', 1, 1)])
+        self.KB.append([-KnowledgeBase.symbol('H_P', 1, 1)])
         
         # Pit-Breeze, Wumpus-Stench, Poisonous Gas-Whiff, Healing Potion-Glow rules for each cell
         percepts = {
@@ -43,16 +43,16 @@ class KB:
         for i in range(1, self.size + 1):
             for j in range(1, self.size + 1):
                 for trigger, percept in percepts.items():
-                    percept_symbol = KB.symbol(percept, i, j)
+                    percept_symbol = KnowledgeBase.symbol(percept, i, j)
                     adjacent_trigger = []
                     if i > 1:  # Up
-                        adjacent_trigger.append(KB.symbol(trigger, i-1, j))
+                        adjacent_trigger.append(KnowledgeBase.symbol(trigger, i-1, j))
                     if i < self.size:  # Down
-                        adjacent_trigger.append(KB.symbol(trigger, i+1, j))
+                        adjacent_trigger.append(KnowledgeBase.symbol(trigger, i+1, j))
                     if j < self.size:  # Right
-                        adjacent_trigger.append(KB.symbol(trigger, i, j+1))
+                        adjacent_trigger.append(KnowledgeBase.symbol(trigger, i, j+1))
                     if j > 1:  # Left
-                        adjacent_trigger.append(KB.symbol(trigger, i, j-1))
+                        adjacent_trigger.append(KnowledgeBase.symbol(trigger, i, j-1))
 
                     # Px,y => (Tx+1,y v Tx-1,y v Tx,y+1 v Tx,y-1)
                     self.KB.append([-percept_symbol] + adjacent_trigger)
