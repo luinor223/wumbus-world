@@ -17,22 +17,28 @@ def main():
     dio.output_action_log()
 
     jotaro = PseudoAgent(dio.action_log, 'input.txt')
+
     scr_size = (800, 600)
     pygame.init()
     screen = pygame.display.set_mode(scr_size)
-    jotaro.display(screen)
-    pygame.display.flip()
-    time.sleep(1)
-    time_stop = jotaro.next_step()
-    jotaro.display(screen)
-    pygame.display.flip()
+    fps = 12
+    pyclock = pygame.time.Clock()
 
-    while time_stop:
+    running = True
+    while running:
+        pyclock.tick(fps)
         screen.fill((0, 0, 0))
-        time.sleep(1)
-        time_stop = jotaro.next_step()
+
+        for events in pygame.event.get():
+            if events.type == pygame.QUIT:
+                running = False
+                break
+
+        jotaro.next_step()
         jotaro.display(screen)
         pygame.display.flip()
+
+    pygame.quit()
 
 
 

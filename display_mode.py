@@ -71,8 +71,8 @@ def draw_information(scr, agent):
 
 
 def display_map(input_map, scr, agent, fog):
-    bg_tab = pygame.transform.scale(pygame.image.load(f"assets/bg1.png").convert_alpha(), (520, 520))
-    scr.blit(bg_tab, (50, 50))
+    bg_tab = pygame.transform.scale(pygame.image.load(f"assets/bg1.png").convert_alpha(), (540, 540))
+    scr.blit(bg_tab, (40, 40))
 
     for i in range(10):
         for ii in range(10):
@@ -129,6 +129,17 @@ class PseudoAgent:
                 self.agent_map.append(line.split('.'))
                 self.original_map.append(line.split('.'))
 
+    def reset_stats(self):
+        self.pos = (9, 0)
+        self.HP = 4
+        self.points = 0
+        self.facing = 0
+        self.step_index = 0
+        self.pots = 0
+        self.gold = 0
+
+        self.agent_map = list([list(_) for _ in self.original_map])
+
     def go_forward(self):
         new_pos = (
             self.pos[0] + direction_map[self.facing][0],
@@ -159,10 +170,11 @@ class PseudoAgent:
         else:
             self.agent_map[new_pos[0]][new_pos[1]] = ','.join(get_elements)
 
-
     def next_step(self):
         if self.step_index == len(self.move_sequence):
-            return False
+            self.reset_stats()
+            return
+
         movement = self.move_sequence[self.step_index][1]
         if movement == 'go forward':
             self.go_forward()
@@ -216,7 +228,6 @@ class PseudoAgent:
             print("The agent is dead lmao")
 
         self.step_index += 1
-        return True
 
     def display(self, scr):
         display_map(self.agent_map, scr, self, fog=True)
