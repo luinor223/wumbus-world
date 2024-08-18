@@ -83,15 +83,6 @@ class Agent:
             if self.infer(neighbor[0], neighbor[1]) == 'somewhat safe':
                 safe_neighbors.append(neighbor)
                 self.safe_cells.add(neighbor)
-        
-        # Hanlde the unknown poison case
-        if 'W_H' in self.program.cell(position[0], position[1]):
-            for neighbor in neighbors:
-                if self.infer(neighbor[0], neighbor[1]) == 'unsafe':
-                    continue
-                if self.HP + self.healingPotion * 25 >= 50:
-                    safe_neighbors.append(neighbor)
-                    self.safe_cells.add(neighbor)
                 
         return safe_neighbors
     
@@ -131,8 +122,7 @@ class Agent:
             self.action_log.append((self.pos, "climb out"))
             self.points += 10  # Bonus for successfully exiting
     
-    def hanlde_poison(self):
-        self.kb.add_clause([KB.symbol('P_G', self.pos[0], self.pos[1])])
+    def handle_poison(self):
         self.HP -= 25
         self.safe_cells.remove(self.pos)
         if self.HP > 0:
@@ -152,20 +142,18 @@ class Agent:
         
         if 'W' in cell_contents:
             self.HP = 0
-            self.points -= 10000
         
         if 'P' in cell_contents:
             self.HP = 0
-            self.points -= 10000
         
         if 'P_G' in cell_contents:
-            self.hanlde_poison()
+            self.handle_poison()
         
         if 'H_P' in cell_contents:
             self.grab_healing_potion()
         
         if self.HP <= 0:
-            self.points -= 10000  # Large penalty for dying
+            self.points -= 10000
             self.action_log.append((self.pos, "die"))
     
     def move(self, new_pos):
