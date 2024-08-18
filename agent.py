@@ -129,8 +129,9 @@ class Agent:
     
     def handle_poison(self):
         self.HP -= 25
-        self.safe_cells.remove(self.pos)
+        # self.safe_cells.remove(self.pos)
         self.action_log.append((self.pos, "poisoned"))
+
     
     def handle_cell_contents(self):
         cell_contents = self.program.cell(self.pos[0], self.pos[1])
@@ -149,10 +150,9 @@ class Agent:
         
         if 'H_P' in cell_contents:
             self.grab_healing_potion()
-        
         if self.HP <= 25:
             self.use_healing_potion()
-        
+
         if self.HP <= 0:
             self.points -= 10000
             self.action_log.append((self.pos, "die"))
@@ -234,23 +234,43 @@ class Agent:
                     return True
         return False
     
+    # def check_exit_safety(self):
+    #     _, gas_cell_num = self.find_path(self.pos, self.caveExit)
+    #     return int(self.HP + self.healingPotion*25) - int(gas_cell_num * 25) # if >= 25 then still
+
     def explore(self):
         self.perceive()
         while self.HP > 0:
-            #print(f"Exploring cave at {self.pos}")
             safe_neighbors = self.get_safe_neighbors(self.pos)
             unvisited_safe_neighbors = [pos for pos in safe_neighbors if pos not in self.visited]
-            
+            #print('CURRENTLY AT', self.pos)
             if unvisited_safe_neighbors:
                 next_pos = unvisited_safe_neighbors[0]
             else:
-                # No safe moves, consider shooting or backtracking
+                #print('NO SAFE MOVES AT THE CURRENT TILE')
+                # No safe moves, consider shooting or find alternative cell
                 if self.consider_shooting():
                     continue
-                next_pos = self.backtrack()
-            
+                next_pos = self.find_alternative_safe_cell()
+                #print('FIRST find_alternative_safe_cell():', next_pos)
             if next_pos:
-                self.move(next_pos)
+                if self.kb.query('P_G', next_pos[0], next_pos[1]) == 'not exists': #if the next_pos is doesn't have any danger 
+                    self.move(next_pos) # proceed normally
+                else: #if there is chance that the next_pos has poison gas('unknown' or 'exists')
+                    next_pos = self.find_alternative_safe_cell() # find another normal cell(if any)
+                    #print('SECOND find_alternative_safe_cell():', next_pos)
+                    if self.kb.query('P_G', next_pos[0], next_pos[1]) == 'not exists': #RECHECK if the NEW next_pos is doesn't have any danger 
+                        self.move(next_pos) # proceed normally
+                    else: #there is ONLY poison cells if this is reached
+                        #check if it have enough HP to escape if it go to this cell(>50)
+                        path, hp_left = self.find_path(self.pos, self.caveExit)
+                        if path and hp_left >= 50:
+                            #print('poision cell, still manageable')
+                            self.move(next_pos)
+                        else: #If not then the best choice is to exit the cave
+                            #print('gtfo')
+                            self.return_to_exit()
+                            return
             # There is no unvisited safe cells left
             else:
                 break  
@@ -260,36 +280,50 @@ class Agent:
             self.return_to_exit()
     
     def find_path(self, start, goal):
-        #Note: prioritise path contain least poison tile(even if its cost(action points) is higher than the shorsted path)
+        #This function find the path with the least poison cell taken (even if its cost(action points) is higher than the shorsted path)
+        self.visited.add(goal)
         queue = [(start, [start], 0)] #[current pos, path taken, number of poison gas taken]
         reached = {start: 0} #to keep track of visited cell, also represent the total poison gas taken up to this tile
         while queue:
             (vertex, path, poison_tiles_num) = queue.pop(0)
             if vertex == goal:
-                return path
+                return path, poison_tiles_num
             if (poison_tiles_num*25 < self.HP + self.healingPotion*25):
                 for next_pos in self.get_safe_neighbors(vertex):
-                    if next_pos not in reached or poison_tiles_num < reached[next_pos]:
+                    if next_pos in self.visited and (next_pos not in reached or poison_tiles_num < reached[next_pos]):
                         if self.kb.query('P_G', next_pos[0], next_pos[1]) == 'exists':
                             poison_tiles_num += 1
                         reached[next_pos] = poison_tiles_num
                         queue.append((next_pos, path + [next_pos], poison_tiles_num))
-
-        return None  # No path found    
+        self.visited.remove(goal)
+        return None, None  # No path found    
     
-    def backtrack(self):
-        # Find the nearest unexplored safe cell
+    def find_alternative_safe_cell(self):
+        # This function find the nearest unexplored cell, prioritize normal cell first then poison cell 
         unexplored_safe_cells = self.safe_cells - self.visited
         if not unexplored_safe_cells:
             return None  # No unexplored safe cells left
+        safe_cells = [cell for cell in unexplored_safe_cells if self.kb.query('P_G', cell[0], cell[1]) == 'not exists']
+        poison_cells = [cell for cell in unexplored_safe_cells if cell not in safe_cells]
 
-        nearest_cell = min(unexplored_safe_cells, 
-                        key=lambda cell: abs(cell[0] - self.pos[0]) + abs(cell[1] - self.pos[1]))
+        safe_cells = sorted(safe_cells, key=lambda cell: abs(cell[0] - self.pos[0]) + abs(cell[1] - self.pos[1]))
+        poison_cells =  sorted(poison_cells, key=lambda cell: abs(cell[0] - self.pos[0]) + abs(cell[1] - self.pos[1]))
+        # print('safe cells:', safe_cells)
+        # print('poison_cells:', poison_cells)
+        if safe_cells:
+            nearest_cell = safe_cells[0]
+        else:
+            nearest_cell = poison_cells[0] if poison_cells else None
 
+        # print('list = ', unexplored_safe_cells)
+        # nearest_cell = min(unexplored_safe_cells, 
+        #                 key=lambda cell: abs(cell[0] - self.pos[0]) + abs(cell[1] - self.pos[1]))
+            
         # Find a path to the nearest unexplored safe cell
-        path = self.find_path(self.pos, nearest_cell)
+        path, _ = self.find_path(self.pos, nearest_cell)
         
         if path:
+            self.visited.remove(nearest_cell)
             # Move to the next position in the path
             next_pos = path[1]  # path[0] is the current position
             return next_pos
@@ -297,8 +331,9 @@ class Agent:
             return None  # No path found
     
     def return_to_exit(self):
-        path = self.find_path(self.pos, self.caveExit)
-        
+        print('return exit')
+        path, _ = self.find_path(self.pos, self.caveExit)
+        print(path)
         if path:
             for next_pos in path[1:]:  # Skip the first position as it's the current position
                 self.move(next_pos)
