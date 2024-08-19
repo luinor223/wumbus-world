@@ -5,7 +5,7 @@ from program import Program
 import pygame
 from display_mode import PseudoAgent
 
-input_file = 'test_cases/test6_purple_haze.txt'
+input_file = 'test_cases/test6_battle_through_the_heavens.txt'
 
 def main():
     ZaWorld = Program()
@@ -13,7 +13,8 @@ def main():
     ZaWorld.print_world()
     dio = Agent(ZaWorld, 1, 1)
     dio.explore()
-    dio.output_action_log() 
+    result_file = Program.generate_output_filename(input_file)
+    dio.output_action_log(result_file) 
 
     jotaro = PseudoAgent(dio.action_log, input_file)
 

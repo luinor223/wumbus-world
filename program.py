@@ -68,3 +68,22 @@ class Program:
     def print_world(self):
         for line in self.map[::-1]:
             print(line)
+    
+    @staticmethod
+    def generate_output_filename(input_file):
+        # Split the input path into directories and filename
+        parts = input_file.split('/')
+        
+        # Get the last part (the filename)
+        filename = parts[-1]
+        
+        # Split the filename and extension
+        name_parts = filename.split('.')
+        
+        # Create the new filename
+        new_filename = 'result_' + name_parts[0] + '.txt'
+        
+        # Construct the full output path
+        output_file = 'results/' + new_filename
+        
+        return output_file
