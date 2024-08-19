@@ -293,6 +293,7 @@ class PseudoAgent:
 
         elif movement == 'shoot':
             self.shoot = True
+            self.points -= 100
             print('pang!')
 
         elif movement == 'poisoned':
