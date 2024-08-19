@@ -5,16 +5,17 @@ from program import Program
 import pygame
 from display_mode import PseudoAgent
 
+input_file = 'test4_wumpus_blocking_2.txt'
 
 def main():
     ZaWorld = Program()
-    ZaWorld.create_world('input.txt')
+    ZaWorld.create_world(input_file)
     ZaWorld.print_world()
     dio = Agent(ZaWorld, 1, 1)
     dio.explore()
-    dio.output_action_log()
+    dio.output_action_log() 
 
-    jotaro = PseudoAgent(dio.action_log, 'input.txt')
+    jotaro = PseudoAgent(dio.action_log, input_file)
 
     scr_size = (800, 600)
     pygame.init()
