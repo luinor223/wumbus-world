@@ -5,7 +5,7 @@ from program import Program
 import pygame
 from display_mode import PseudoAgent
 
-input_file = 'test_cases/test6_poisoned.txt'
+input_file = 'test_cases/test6_purple_haze.txt'
 
 def main():
     ZaWorld = Program()
