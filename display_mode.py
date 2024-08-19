@@ -56,7 +56,7 @@ def draw_effect(input_map, scr, x, y):
         scr.blit(img, (60 + 50 * y, 60 + 50 * x))
 
 
-def draw_information(scr, agent, cur_state):
+def draw_information(scr, agent, cur_state, fog_state):
     info_tab = pygame.transform.scale(pygame.image.load(f"assets/info.png").convert_alpha(), (180, 540))
     scr.blit(info_tab, (590, 40))
 
@@ -84,14 +84,14 @@ def draw_information(scr, agent, cur_state):
 
     for e_index, element in enumerate(('W', 'P', 'P_G', 'H_P')):
         img = pygame.transform.scale(pygame.image.load("assets/" + element + ".png").convert_alpha(), (40, 40))
-        scr.blit(img, (620 + 80 * (e_index // 2), 300 + 50 * (e_index % 2)))
+        scr.blit(img, (620 + 60 * (e_index // 2), 300 + 50 * (e_index % 2)))
         if aura_map[element] in cur_state:
             warn = pygame.transform.scale(pygame.image.load("assets/exclam.png").convert_alpha(), (40, 40))
-            scr.blit(warn, (650 + 80 * (e_index // 2), 300 + 50 * (e_index % 2)))
+            scr.blit(warn, (620 + 60 * (e_index // 2), 300 + 50 * (e_index % 2)))
 
     if agent.scream:
         scream = pygame.transform.scale(pygame.image.load("assets/scream.png").convert_alpha(), (50, 50))
-        scr.blit(scream, (640, 400))
+        scr.blit(scream, (630, 400))
 
     if agent.shoot:
         new_pos = (
@@ -100,6 +100,19 @@ def draw_information(scr, agent, cur_state):
         )
         shoot_cursor = pygame.transform.scale(pygame.image.load("assets/shoot.png").convert_alpha(), (50, 50))
         scr.blit(shoot_cursor, (60 + 50 * new_pos[1], 60 + 50 * new_pos[0]))
+
+    fog_states = (
+        'Agent',
+        'Traced',
+        'All'
+    )
+    text8, text8_rect = draw_text("[SPACE]: Auto play", "comicsansms", 15, (610, 480))
+    scr.blit(text8, text8_rect)
+    text9, text9_rect = draw_text(f"[->]: Next move", "comicsansms", 15, (610, 500))
+    scr.blit(text9, text9_rect)
+
+    text7, text7_rect = draw_text(f"Fog mode: {fog_states[fog_state]}", "comicsansms", 15, (610, 520))
+    scr.blit(text7, text7_rect)
 
 
 def display_map(input_map, scr, agent, fog, fog_overlay):
@@ -115,22 +128,23 @@ def display_map(input_map, scr, agent, fog, fog_overlay):
     agent_sprite = pygame.transform.scale(pygame.image.load(f"assets/A_{agent.facing}.png").convert_alpha(), (50, 50))
     scr.blit(agent_sprite, (60 + 50 * agent.pos[1], 60 + 50 * agent.pos[0]))
 
-    draw_information(scr, agent, check_local(input_map, agent.pos[0], agent.pos[1]))
+    draw_information(scr, agent, check_local(input_map, agent.pos[0], agent.pos[1]), fog)
 
     for i in range(10):
         for ii in range(10):
             draw_effect(input_map, scr, i, ii)
 
-    if fog:
+    if fog != 2:
         for i in range(10):
             for ii in range(10):
                 if agent.pos == (i, ii):
                     continue
                 if fog_overlay[i][ii]:
                     foggy = pygame.transform.scale(pygame.image.load(f"assets/fog.png").convert_alpha(), (60, 60))
-                else:
+                    scr.blit(foggy, (55 + 50 * ii, 55 + 50 * i))
+                elif fog == 0:
                     foggy = pygame.transform.scale(pygame.image.load(f"assets/fog_less.png").convert_alpha(), (60, 60))
-                scr.blit(foggy, (55 + 50 * ii, 55 + 50 * i))
+                    scr.blit(foggy, (55 + 50 * ii, 55 + 50 * i))
 
 
 def convert_pos(pos_):
@@ -280,8 +294,8 @@ class PseudoAgent:
 
         self.step_index += 1
 
-    def display(self, scr, toggle_fog):
-        display_map(self.agent_map, scr, self, toggle_fog, self.fogged)
+    def display(self, scr, fog_mode):
+        display_map(self.agent_map, scr, self, fog_mode, self.fogged)
 
 
 

@@ -19,13 +19,18 @@ def main():
     scr_size = (800, 600)
     pygame.init()
     screen = pygame.display.set_mode(scr_size)
-    fps = 12
+    pygame.display.set_caption("Wumpus World")
+    pygame.display.set_icon(pygame.image.load("assets/W.png"))
+    fps = 20
+    frame = 0
     pyclock = pygame.time.Clock()
-    toggle_fog = True
+    fog_mode = 0
+    auto_move = False
 
     running = True
     while running:
-        pyclock.tick(fps)
+        pyclock.tick(60)
+        frame += 1
         screen.fill((0, 0, 0))
 
         for events in pygame.event.get():
@@ -35,11 +40,22 @@ def main():
 
             if events.type == pygame.KEYDOWN:
                 if events.key == pygame.K_TAB:
-                    toggle_fog = not toggle_fog
+                    fog_mode += 1
+                    fog_mode %= 3
+                if events.key == pygame.K_SPACE:
+                    auto_move = not auto_move
+                    print(auto_move)
+                if events.key == pygame.K_RIGHT:
+                    jotaro.next_step()
 
-        jotaro.next_step()
-        jotaro.display(screen, toggle_fog)
-        pygame.display.flip()
+        if frame == fps:
+            jotaro.display(screen, fog_mode)
+            pygame.display.flip()
+
+            if auto_move:
+                jotaro.next_step()
+
+            frame = 0
 
     pygame.quit()
 
