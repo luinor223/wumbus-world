@@ -228,15 +228,33 @@ class Agent:
             if 'S' not in self.program.cell(neighbor[0], neighbor[1]):
                 self.kb.add_clause([-KnowledgeBase.symbol('S', neighbor[0], neighbor[1])])
         self.action_log.append((self.pos, 'heard scream'))
-        
+
+    def get_all_Wumpus_cells(self):
+        #this funtion return all cells that certainly has Wumpus
+        definately_wumpus_cell = []
+        for i in range(1, self.program.size + 1):
+            for j in range(1, self.program.size + 1):
+                if (self.kb.query('W', i, j) == 'exists'):
+                    definately_wumpus_cell.append((i, j))
+        return definately_wumpus_cell
+    
     def consider_shooting(self):
-        for direction in self.get_direction_prio():
+        for direction in self.get_direction_prio(): #prioritize shooting cell that definitely has Wumpus
             target_pos = (self.pos[0] + self.direction_map[direction][0], 
                         self.pos[1] + self.direction_map[direction][1])
-            if self.kb.query('W', target_pos[0], target_pos[1]) == 'exists':
+            if 1 <= target_pos[0] <= self.program.size and 1 <= target_pos[1] <= self.program.size and self.kb.query('W', target_pos[0], target_pos[1]) == 'exists':
                 self.turn(direction)
                 if self.shoot():
                     return True
+        unexplored_safe_cells = self.safe_cells - self.visited
+        if not unexplored_safe_cells: #if there is no exploreable cells left then as a last resort, shooting cell that might has Wumpus
+            for direction in self.get_direction_prio():
+                target_pos = (self.pos[0] + self.direction_map[direction][0],
+                            self.pos[1] + self.direction_map[direction][1])
+                if 1 <= target_pos[0] <= self.program.size and 1 <= target_pos[1] <= self.program.size and self.kb.query('W', target_pos[0], target_pos[1]) == 'unknown':
+                    self.turn(direction)
+                    if self.shoot():
+                        return True
         return False
     
     # def check_exit_safety(self):
@@ -248,7 +266,7 @@ class Agent:
         while self.HP > 0:
             safe_neighbors = self.get_safe_neighbors(self.pos)
             unvisited_safe_neighbors = [pos for pos in safe_neighbors if pos not in self.visited]
-            #print('CURRENTLY AT', self.pos)
+            print('CURRENTLY AT', self.pos)
             if unvisited_safe_neighbors:
                 next_pos = unvisited_safe_neighbors[0]
             else:
@@ -277,9 +295,18 @@ class Agent:
                             self.return_to_exit()
                             return
             # There is no unvisited safe cells left
-            else:
-                break  
-
+            else: #consider finding wumpus cells to shooting them
+                definately_wumpus_cell = self.get_all_Wumpus_cells()
+                definately_wumpus_cell = sorted(definately_wumpus_cell, key=lambda cell: abs(cell[0] - self.pos[0]) + abs(cell[1] - self.pos[1]))  
+                if definately_wumpus_cell:
+                    nearest_Wumpus_cell = definately_wumpus_cell[0]
+                    path, _ = self.find_path(self.pos, nearest_Wumpus_cell)
+                    if path:
+                        self.visited.remove(nearest_Wumpus_cell)
+                        self.move(path[1])
+                else:
+                    break
+        print('No safe cell and Wumpus left, return')
         # Try to return to cave exit
         if self.HP > 0:
             self.return_to_exit()
@@ -291,15 +318,17 @@ class Agent:
         reached = {start: 0} #to keep track of visited cell, also represent the total poison gas taken up to this tile
         while queue:
             (vertex, path, poison_tiles_num) = queue.pop(0)
+            #print('current queue: ', vertex, "path", path)
             if vertex == goal:
                 return path, poison_tiles_num
             if (poison_tiles_num*25 < self.HP + self.healingPotion*25):
-                for next_pos in self.get_safe_neighbors(vertex):
+                for next_pos in self.get_neighbors(vertex):
                     if next_pos in self.visited and (next_pos not in reached or poison_tiles_num < reached[next_pos]):
                         new_poison_tiles_num = poison_tiles_num
                         if self.kb.query('P_G', next_pos[0], next_pos[1]) == 'exists':
                             new_poison_tiles_num = poison_tiles_num + 1
                         reached[next_pos] = poison_tiles_num
+                        #print('append', next_pos)
                         queue.append((next_pos, path + [next_pos], new_poison_tiles_num))
         self.visited.remove(goal)
         return None, None  # No path found    
