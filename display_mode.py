@@ -114,6 +114,14 @@ def draw_information(scr, agent, cur_state, fog_state):
     text7, text7_rect = draw_text(f"Fog mode: {fog_states[fog_state]}", "comicsansms", 15, (610, 520))
     scr.blit(text7, text7_rect)
 
+    for i in range(10):
+        x_label, x_label_rect = draw_text(f"{9 - i + 1}", "comicsansms", 20, (0, 0), (255, 255, 255))
+        x_label_rect.center = (20, 80 + 50 * i)
+        y_label, y_label_rect = draw_text(f"{i + 1}", "comicsansms", 20, (0, 0), (255, 255, 255))
+        y_label_rect.center = (80 + 50 * i, 20)
+        scr.blit(x_label, x_label_rect)
+        scr.blit(y_label, y_label_rect)
+
 
 def display_map(input_map, scr, agent, fog, fog_overlay):
     bg_img = pygame.transform.scale(pygame.image.load(f"assets/bg2.png").convert_alpha(), (800, 600))
@@ -125,7 +133,10 @@ def display_map(input_map, scr, agent, fog, fog_overlay):
         for ii in range(10):
             draw_cell(input_map, scr, i, ii)
 
-    agent_sprite = pygame.transform.scale(pygame.image.load(f"assets/A_{agent.facing}.png").convert_alpha(), (50, 50))
+    if agent.HP > 0:
+        agent_sprite = pygame.transform.scale(pygame.image.load(f"assets/A_{agent.facing}.png").convert_alpha(), (50, 50))
+    else:
+        agent_sprite = pygame.transform.scale(pygame.image.load(f"assets/dead.png").convert_alpha(), (50, 50))
     scr.blit(agent_sprite, (60 + 50 * agent.pos[1], 60 + 50 * agent.pos[0]))
 
     draw_information(scr, agent, check_local(input_map, agent.pos[0], agent.pos[1]), fog)
