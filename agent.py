@@ -55,6 +55,9 @@ class Agent:
         pit_check = self.kb.query('P', x, y)
         poison_check = self.kb.query('P_G', x, y)
         
+        if wumpus_check == 'inconsistent' or pit_check == 'inconsistent' or poison_check == 'inconsistent':
+            print(f'inconsistent at ({x}, {y})')
+        
         # Wumpus, Pit
         if wumpus_check == 'not exists' and pit_check == 'not exists' and poison_check == 'not exists':
             return 'safe'
@@ -120,7 +123,8 @@ class Agent:
         for neighbor in self.get_neighbors(self.pos):
             self.program.remove_object('G_L', neighbor[0], neighbor[1])
             self.kb.remove_clause([KnowledgeBase.symbol('G_L', neighbor[0], neighbor[1])])
-            self.kb.add_clause([-KnowledgeBase.symbol('G_L', neighbor[0], neighbor[1])])
+            if 'G_L' not in self.program.cell(neighbor[0], neighbor[1]):
+                self.kb.add_clause([-KnowledgeBase.symbol('G_L', neighbor[0], neighbor[1])])
             
     def climb_out(self):
         if self.pos == self.caveExit:
