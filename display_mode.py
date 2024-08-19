@@ -176,6 +176,7 @@ direction_map = {
 
 class PseudoAgent:
     valid_objects = ['W', 'P', 'P_G', 'H_P', 'G', 'S', 'B', 'W_H', 'G_L', '-']
+
     def __init__(self, move_sequence, filename):
         self.pos = (9, 0)
         self.HP = 4
@@ -319,6 +320,7 @@ class PseudoAgent:
 
         elif movement == 'die':
             print("The agent is dead lmao")
+            self.points -= 10000
 
         self.step_index += 1
         return True
