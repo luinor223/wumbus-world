@@ -171,7 +171,7 @@ direction_map = {
 
 
 class PseudoAgent:
-
+    valid_objects = ['W', 'P', 'P_G', 'H_P', 'G', 'S', 'B', 'W_H', 'G_L', '-']
     def __init__(self, move_sequence, filename):
         self.pos = (9, 0)
         self.HP = 4
@@ -194,6 +194,18 @@ class PseudoAgent:
                 self.agent_map.append(line.split('.'))
                 self.original_map.append(line.split('.'))
 
+        self.preprocess()
+
+    def preprocess(self):
+        for i in range(len(self.agent_map)):
+            for j in range(len(self.agent_map[i])):
+                cell_contents = self.agent_map[i][j].split(',')
+                validated_contents = [obj for obj in cell_contents if obj in self.valid_objects and obj != 'A']
+                if not validated_contents:
+                    validated_contents = ['-']
+                self.agent_map[i][j] = ','.join(validated_contents)
+                self.original_map[i][j] = ','.join(validated_contents)
+            
     def reset_stats(self):
         self.pos = (9, 0)
         self.HP = 4
@@ -206,7 +218,7 @@ class PseudoAgent:
         self.shoot = False
         self.fogged = [[False if (x, y) == (9, 0) else True for y in range(10)] for x in range(10)]
 
-        self.agent_map = list([list(_) for _ in self.original_map])
+        self.agent_map = [row[:] for row in self.original_map]
 
     def go_forward(self):
         new_pos = (
