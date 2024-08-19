@@ -263,7 +263,7 @@ class Agent:
                         self.move(next_pos) # proceed normally
                     else: #there is ONLY poison cells if this is reached
                         #check if it have enough HP to escape if it go to this cell(>50)
-                        path, total_poison_cell = self.find_path(self.pos, self.caveExit)
+                        path, total_poison_cell = self.find_path(next_pos, self.caveExit)
                         if path and self.HP + self.healingPotion*25 - total_poison_cell * 25 >= 50:
                             
                             #print('poision cell, still manageable')
@@ -283,8 +283,7 @@ class Agent:
     def find_path(self, start, goal):
         #This function find the path with the least poison cell taken (even if its cost(action points) is higher than the shorsted path)
         self.visited.add(goal)
-        has_poison = self.kb.query('P_G', start[0], start[1]) == 'exists'
-        queue = [(start, [start], has_poison)] #[current pos, path taken, number of poison gas taken]
+        queue = [(start, [start], 0)] #[current pos, path taken, number of poison gas taken]
         reached = {start: 0} #to keep track of visited cell, also represent the total poison gas taken up to this tile
         while queue:
             (vertex, path, poison_tiles_num) = queue.pop(0)
