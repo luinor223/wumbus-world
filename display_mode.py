@@ -305,13 +305,13 @@ class PseudoAgent:
             self.points -= 10
 
         elif movement == 'heard scream':
-            print("rawr.")
+            print("A Wumpus has died!")
             self.remove_wumbus()
 
         elif movement == 'shoot':
             self.shoot = True
             self.points -= 100
-            print('pang!')
+            print('Agent has shot an arrow')
 
         elif movement == 'poisoned':
             print("The agent has been poisoned")
@@ -319,7 +319,7 @@ class PseudoAgent:
             self.points -= 10
 
         elif movement == 'die':
-            print("The agent is dead lmao")
+            print("The agent is dead.")
             self.points -= 10000
 
         self.step_index += 1

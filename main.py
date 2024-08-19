@@ -3,9 +3,11 @@ from program import Program
 import pygame
 from display_mode import PseudoAgent
 
-input_file = 'test_cases/test6_battle_through_the_heavens.txt'
 
 def main():
+    # input_file = 'test_cases/test5_purple_haze.txt'
+    input_file = input("Provide the input file (ex: input.txt) :")
+
     ZaWorld = Program()
     ZaWorld.create_world(input_file)
     ZaWorld.print_world()
@@ -44,7 +46,6 @@ def main():
                     fog_mode %= 3
                 if events.key == pygame.K_SPACE:
                     auto_move = not auto_move
-                    print(auto_move)
                 if events.key == pygame.K_RIGHT:
                     jotaro.next_step()
 
