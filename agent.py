@@ -130,7 +130,6 @@ class Agent:
     
     def handle_poison(self):
         self.HP -= 25
-        # self.safe_cells.remove(self.pos)
         self.action_log.append((self.pos, "poisoned"))
         self.kb.add_clause([KnowledgeBase.symbol('P_G', self.pos[0], self.pos[1])])
 
