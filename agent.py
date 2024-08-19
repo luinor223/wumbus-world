@@ -265,7 +265,6 @@ class Agent:
                         #check if it have enough HP to escape if it go to this cell(>50)
                         path, total_poison_cell = self.find_path(next_pos, self.caveExit)
                         if path and self.HP + self.healingPotion*25 - total_poison_cell * 25 >= 50:
-                            
                             #print('poision cell, still manageable')
                             self.move(next_pos)
                         else: #If not then the best choice is to exit the cave
@@ -292,10 +291,11 @@ class Agent:
             if (poison_tiles_num*25 < self.HP + self.healingPotion*25):
                 for next_pos in self.get_safe_neighbors(vertex):
                     if next_pos in self.visited and (next_pos not in reached or poison_tiles_num < reached[next_pos]):
+                        new_poison_tiles_num = poison_tiles_num
                         if self.kb.query('P_G', next_pos[0], next_pos[1]) == 'exists':
-                            poison_tiles_num += 1
+                            new_poison_tiles_num = poison_tiles_num + 1
                         reached[next_pos] = poison_tiles_num
-                        queue.append((next_pos, path + [next_pos], poison_tiles_num))
+                        queue.append((next_pos, path + [next_pos], new_poison_tiles_num))
         self.visited.remove(goal)
         return None, None  # No path found    
     
