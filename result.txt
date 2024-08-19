@@ -26,6 +26,7 @@
 (2, 4) go forward
 (1, 4) turn left
 (1, 4) go forward
+(1, 5) poisoned
 (1, 5) turn right
 (1, 5) turn right
 (1, 5) go forward
@@ -41,6 +42,7 @@
 (5, 2) turn right
 (5, 2) go forward
 (4, 2) poisoned
+(4, 2) use healing potion
 (4, 2) turn left
 (4, 2) go forward
 (4, 3) turn left
@@ -53,10 +55,12 @@
 (6, 3) turn right
 (6, 3) go forward
 (5, 3) poisoned
-(5, 3) use healing potion
-(5, 3) turn left
 (5, 3) go forward
-(5, 4) turn right
-(5, 4) go forward
-(4, 4) go forward
-(3, 4) die
+(4, 3) go forward
+(3, 3) turn right
+(3, 3) go forward
+(3, 2) go forward
+(3, 1) turn left
+(3, 1) go forward
+(2, 1) go forward
+(1, 1) climb out
