@@ -54,7 +54,7 @@ def main():
             pygame.display.flip()
 
             if auto_move:
-                jotaro.next_step()
+                auto_move = jotaro.next_step()
 
             frame = 0
 

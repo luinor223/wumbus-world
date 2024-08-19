@@ -106,6 +106,9 @@ def draw_information(scr, agent, cur_state, fog_state):
         'Traced',
         'All'
     )
+
+    text10, text10_rect = draw_text("[TAB]: Change fog", "comicsansms", 15, (610, 460))
+    scr.blit(text10, text10_rect)
     text8, text8_rect = draw_text("[SPACE]: Auto play", "comicsansms", 15, (610, 480))
     scr.blit(text8, text8_rect)
     text9, text9_rect = draw_text(f"[->]: Next move", "comicsansms", 15, (610, 500))
@@ -260,7 +263,7 @@ class PseudoAgent:
 
         if self.step_index == len(self.move_sequence):
             self.reset_stats()
-            return
+            return False
 
         movement = self.move_sequence[self.step_index][1]
         if movement == 'go forward':
@@ -317,6 +320,7 @@ class PseudoAgent:
             print("The agent is dead lmao")
 
         self.step_index += 1
+        return True
 
     def display(self, scr, fog_mode):
         display_map(self.agent_map, scr, self, fog_mode, self.fogged)
