@@ -283,7 +283,8 @@ class Agent:
     def find_path(self, start, goal):
         #This function find the path with the least poison cell taken (even if its cost(action points) is higher than the shorsted path)
         self.visited.add(goal)
-        queue = [(start, [start], 0)] #[current pos, path taken, number of poison gas taken]
+        has_poison = self.kb.query('P_G', start[0], start[1]) == 'exists'
+        queue = [(start, [start], has_poison)] #[current pos, path taken, number of poison gas taken]
         reached = {start: 0} #to keep track of visited cell, also represent the total poison gas taken up to this tile
         while queue:
             (vertex, path, poison_tiles_num) = queue.pop(0)
