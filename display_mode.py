@@ -142,8 +142,6 @@ def display_map(input_map, scr, agent, fog, fog_overlay):
         agent_sprite = pygame.transform.scale(pygame.image.load(f"assets/dead.png").convert_alpha(), (50, 50))
     scr.blit(agent_sprite, (60 + 50 * agent.pos[1], 60 + 50 * agent.pos[0]))
 
-    draw_information(scr, agent, check_local(input_map, agent.pos[0], agent.pos[1]), fog)
-
     for i in range(10):
         for ii in range(10):
             draw_effect(input_map, scr, i, ii)
@@ -159,6 +157,9 @@ def display_map(input_map, scr, agent, fog, fog_overlay):
                 elif fog == 0:
                     foggy = pygame.transform.scale(pygame.image.load(f"assets/fog_less.png").convert_alpha(), (60, 60))
                     scr.blit(foggy, (55 + 50 * ii, 55 + 50 * i))
+
+
+    draw_information(scr, agent, check_local(input_map, agent.pos[0], agent.pos[1]), fog)
 
 
 def convert_pos(pos_):
