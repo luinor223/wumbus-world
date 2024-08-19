@@ -1,5 +1,3 @@
-import time
-
 from agent import Agent
 from program import Program
 import pygame
